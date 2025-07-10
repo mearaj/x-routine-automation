@@ -1,14 +1,18 @@
 {
   "name": "my-x-extension",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "package": "npm run clean && npm run build:zip",
     "dev": "vite",
     "build": "vite build && npm run build:extras",
     "build:extras": "esbuild src/background/index.ts --bundle --outfile=dist/background.js --format=esm --platform=browser && esbuild src/content/index.ts --bundle --outfile=dist/content.js --format=esm --platform=browser",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:zip": "vite build && mkdir -p output && zip -r output/extension.zip dist/ && npm run checksum",
+    "checksum": "shasum -a 256 output/extension.zip > output/checksum.sha256",
+    "clean": "rm -rf dist output"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
