@@ -1,15 +1,14 @@
-// userSaga.ts
-import {call, put, takeEvery} from 'redux-saga/effects';
-import {userActions} from '../slices/userSlice.ts';
-import {handleAppStateChange} from "@/store/sagas/appState.ts";
-import type {RootState} from "@/store";
-import {getAppStateFromStorage} from "@/utils";
-import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
+import { call, put, takeEvery } from 'redux-saga/effects';
+import { userActions } from '../slices/userSlice.ts';
+import { automatedTasksActions } from "@/store/slices/automatedTasks.ts";
+import { handleAppStateChange } from "@/store/sagas/appState.ts";
+import { getAppStateFromStorage } from "@/utils";
+import type { RootState } from "@/store";
 
+function* saveAndSwitchUser() {
+  yield* handleAppStateChange(); // Save current state
 
-export function* rehydrateUserOnSwitch() {
-  const newState: RootState = yield call(getAppStateFromStorage);
-
+  const newState: RootState = yield call(getAppStateFromStorage); // Load new state
   yield put(userActions.rehydrateUserState(newState.user));
   yield put(automatedTasksActions.rehydrateAutomationState(newState.automatedTasks));
 }
@@ -24,5 +23,6 @@ export function* watchUserStateChanges(): Generator {
     userActions.setFollowingsForActiveUser.type,
     userActions.addOrUpdateFollowings.type,
   ], handleAppStateChange);
-  yield takeEvery(userActions.setActiveUsername.type, rehydrateUserOnSwitch);
+
+  yield takeEvery(userActions.setActiveUsername.type, saveAndSwitchUser);
 }
