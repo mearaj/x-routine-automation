@@ -59,9 +59,7 @@ async function scrapeFollowings(
           }
         });
 
-        const isFollower = user.textContent?.includes('Follows you') ?? false;
-        const meFollowing = (user.textContent?.includes('Following') ||
-          user.textContent?.includes('Follow back')) ?? false;
+        const isFollower = !!user.querySelector('[data-testid="userFollowIndicator"]');
 
         if (username) {
           if (seen.has(username)) {
@@ -71,7 +69,7 @@ async function scrapeFollowings(
             return;
           }
 
-          if (meFollowing || isFollower) {
+          if (isFollower) {
             seen.add(username);
             const newEntry = {username, mutual: isFollower, timestamp: 0};
             if (message.skipOnFirstVisible) {
