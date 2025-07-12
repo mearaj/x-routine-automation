@@ -81,9 +81,9 @@ This extension avoids API limitations by automating browser tabs — simulating 
 
 ## 📦 Chrome Web Store
 
-> Coming soon...
+✅ **Available now:** [X-Routine-Automation on Chrome Web Store](https://chromewebstore.google.com/detail/x-routine-automation/laoofbnifdjaoijjjppdahengbmnaifm)
 
-Once polished and reviewed, this extension will be published to the [Chrome Web Store](https://chrome.google.com/webstore/developer/dashboard) for easier access and updates.
+> Install directly from the official Chrome Web Store for easier access and automatic updates.
 
 ---
 
