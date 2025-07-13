@@ -256,15 +256,13 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
 
     await wait(1500);
 
-// Click GIF button
     const gifBtn = modalBox.querySelector('button[data-testid="gifSearchButton"]') as HTMLElement | null;
     if (gifBtn) {
       gifBtn.click();
       await wait(2000);
     }
 
-// Type in GIF search
-    const gifInput = modalBox.querySelector('input[placeholder*="Search"]') as HTMLInputElement | null;
+    const gifInput = modalBox.querySelector('input[data-testid="gifSearchSearchInput"]') as HTMLInputElement | null;
     if (gifInput) {
       gifInput.focus();
       gifInput.setRangeText('', 0, gifInput.value.length, 'end');
@@ -288,7 +286,6 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
       }
     }
 
-// Click reply button
     const postReplyBtn = modalBox.querySelector('button[data-testid="tweetButton"]:not([disabled])') as HTMLElement | null;
     if (postReplyBtn) {
       postReplyBtn.click();
