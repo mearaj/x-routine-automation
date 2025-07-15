@@ -142,6 +142,7 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
   let following: Following | undefined = yield* getFirstFilteredFollowing();
 
   while (tweetURL || following) {
+    yield delay(1000); // always wait at least one second
     const sourceReplies: SourceReplies = yield select(sourceRepliesSelector);
     const likeRtThresholdDuration: number = yield select(likeRtThresholdDurationSelector);
     const sourceToTargetThresholdDuration: number = yield select(sourceToTargetThresholdDurationSelector);
@@ -269,8 +270,12 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
         console.log(response);
       } catch (e) {
         console.error(e);
-        yield put(automatedTasksActions.setlikeRtQuoteReplyStatus({status: AutomatedTaskStatusEnum.Error}));
-        return;
+        if (yield* shouldStopProcessing(tabId, targetURLsToTabIdMap)) {
+          return;
+        } else {
+          yield put(automatedTasksActions.setlikeRtQuoteReplyStatus({status: AutomatedTaskStatusEnum.Error}));
+          return;
+        }
       }
     }
     tweetURL = yield* getFirstFoundTweetURL();
