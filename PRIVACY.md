@@ -65,4 +65,7 @@ We’ll update this file and show a notice in the extension if major changes occ
 ## 6. Contact  
 
 Questions, issues, or contributions:  
-→ [GitHub Repository](https://github.com/your-username/x-routine-automation)
+→ [GitHub Repository](https://github.com/mearaj/x-routine-automation)
+
+**Important Disclaimer:**  
+This Chrome extension is intended for personal, non-commercial use only to automate routine tasks on X (formerly Twitter) in a user-controlled manner. Automating interactions like liking, reposting, replying, or quoting may violate X's [Automation Rules](https://help.twitter.com/en/rules-and-policies/twitter-automation) and [Platform Manipulation Policy](https://help.twitter.com/en/rules-and-policies/platform-manipulation). By using this tool, you acknowledge and accept full responsibility for any consequences, including potential account restrictions or suspension. Do not use it for spam, bulk engagement, or any activity that could be seen as inauthentic. Always respect X's rate limits, and we strongly recommend reviewing their policies before proceeding. The developer is not liable for misuse.

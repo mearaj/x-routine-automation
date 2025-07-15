@@ -159,3 +159,5 @@ export default tseslint.config({
   },
 })
 ```
+**Important Disclaimer:**  
+This Chrome extension is intended for personal, non-commercial use only to automate routine tasks on X (formerly Twitter) in a user-controlled manner. Automating interactions like liking, reposting, replying, or quoting may violate X's [Automation Rules](https://help.twitter.com/en/rules-and-policies/twitter-automation) and [Platform Manipulation Policy](https://help.twitter.com/en/rules-and-policies/platform-manipulation). By using this tool, you acknowledge and accept full responsibility for any consequences, including potential account restrictions or suspension. Do not use it for spam, bulk engagement, or any activity that could be seen as inauthentic. Always respect X's rate limits, and we strongly recommend reviewing their policies before proceeding. The developer is not liable for misuse.
