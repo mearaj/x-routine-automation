@@ -52,6 +52,17 @@ export interface FollowingToControllerResponse {
   error: string | null | undefined;
 }
 
+export interface ControllerToLikeAndRtInput {
+  rtText: string;
+  rtImageSearchText: string;
+  rtImageSearchPosition: number;
+  quoteText: string;
+  gazaRtText: string;
+  gazaRtImageSearchText: string;
+  gazaRtImageSearchPosition: number;
+  gazaRtQuoteText: string;
+}
+
 export interface ControllerToLikeAndRtRequest {
   type: typeof REQUEST_LIKE_AND_RT;
   fundraiserURLs: string[];
@@ -62,6 +73,7 @@ export interface ControllerToLikeAndRtRequest {
   timestamp: number;
   isFundraiser?: boolean;
   isGaza?: boolean;
+  userInput: ControllerToLikeAndRtInput;
 }
 
 export interface LikeAndRtToControllerResponse {
@@ -102,4 +114,5 @@ export interface AutomatedTasks {
   sourceToTargetThresholdDuration: number;
   minWaitingTimeForFollowing: number;
   minWaitingTimeForTweet: number;
+  userInput: ControllerToLikeAndRtInput;
 }

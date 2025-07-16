@@ -55,7 +55,7 @@ npm run dev
 To generate the final build:
 
 ```bash
-npm run build
+npm run package
 ```
 
 Then zip the **contents** of the `dist/` folder for Chrome Web Store upload.

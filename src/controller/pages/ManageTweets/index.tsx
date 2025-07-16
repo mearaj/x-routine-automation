@@ -14,7 +14,7 @@ import {ArrowBack, Delete} from '@mui/icons-material';
 import {NavLink} from 'react-router';
 import {useAppDispatch, useAppSelector} from '@/store/store';
 import {type ChangeEvent, useState} from 'react';
-import {AutomatedTaskStatusEnum, type SourceTweetURL} from "@/utils/automatedTasks.ts";
+import {AutomatedTaskStatusEnum, type ControllerToLikeAndRtInput, type SourceTweetURL} from "@/utils/automatedTasks.ts";
 import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
 import {
   activeUsernameSelector,
@@ -27,6 +27,7 @@ import {
   sourceTweetURLsSelector,
   targetTweetURLsSelector
 } from "@/store/selectors.ts";
+import {defaultUserInput} from "@/utils/common.ts";
 
 function ManageTweetsPage() {
   const dispatch = useAppDispatch();
@@ -40,6 +41,7 @@ function ManageTweetsPage() {
   const sourceToTargetThreshold = useAppSelector(sourceToTargetThresholdDurationSelector);
   const followingWaitTime = useAppSelector(minWaitingTimeForFollowingSelector);
   const tweetWaitTime = useAppSelector(minWaitingTimeForTweetSelector);
+  const userInput = useAppSelector(state => state.automatedTasks.userInput);
 
   const [newSource, setNewSource] = useState<SourceTweetURL>({url: '', isGaza: true});
   const [newTargetUrl, setNewTargetUrl] = useState('');
@@ -98,6 +100,20 @@ function ManageTweetsPage() {
 
   const handleUpdateMinWaitTweet = (e: ChangeEvent<HTMLInputElement>) => {
     dispatch(automatedTasksActions.setMinWaitingTimeForTweet(Number(e.target.value)));
+  };
+
+  const handleUpdateUserInput = <K extends keyof ControllerToLikeAndRtInput>(
+    key: K,
+    value: ControllerToLikeAndRtInput[K]
+  ) => {
+    dispatch(automatedTasksActions.setUserInput({
+      ...userInput,
+      [key]: value,
+    }));
+  };
+
+  const handleResetUserInput = () => {
+    dispatch(automatedTasksActions.setUserInput(defaultUserInput));
   };
 
 
@@ -236,7 +252,7 @@ function ManageTweetsPage() {
         </Box>
       </Box>
 
-      <Box mt={4}>
+      <Box mt={4} display="flex" alignItems="center" gap={2}>
         <Button
           variant="contained"
           color={replyStatus === "Running" ? "error" : "primary"}
@@ -245,10 +261,73 @@ function ManageTweetsPage() {
         >
           {replyStatus === "Running" ? "Stop Like And Retweet" : "Start Like and Retweet"}
         </Button>
+
+        <Typography variant="subtitle1">
+          Status: <strong>{replyStatus}</strong>
+        </Typography>
+      </Box>
+      <Box mt={4} display="flex" justifyContent="flex-start">
+        <Button variant="outlined" onClick={handleResetUserInput}>
+          Reset to Default
+        </Button>
       </Box>
 
-      <Box mt={10}>
-        {replyStatus}
+      <Box mt={4}>
+        <Typography variant="h6">User Input Config</Typography>
+        <Box display="flex" flexDirection="column" gap={2} mt={2}>
+
+          <TextField
+            label="RT Text"
+            multiline
+            minRows={3}
+            value={userInput.rtText}
+            onChange={(e) => handleUpdateUserInput('rtText', e.target.value)}
+            fullWidth
+          />
+
+          <TextField
+            label="RT Image Search Text"
+            multiline
+            minRows={2}
+            value={userInput.rtImageSearchText}
+            onChange={(e) => handleUpdateUserInput('rtImageSearchText', e.target.value)}
+            fullWidth
+          />
+
+          <TextField
+            label="RT Image Search Position"
+            type="number"
+            value={userInput.rtImageSearchPosition}
+            onChange={(e) => handleUpdateUserInput('rtImageSearchPosition', Number(e.target.value))}
+            fullWidth
+          />
+
+          <TextField
+            label="Gaza RT Text"
+            multiline
+            minRows={3}
+            value={userInput.gazaRtText}
+            onChange={(e) => handleUpdateUserInput('gazaRtText', e.target.value)}
+            fullWidth
+          />
+
+          <TextField
+            label="Gaza RT Image Search Text"
+            multiline
+            minRows={2}
+            value={userInput.gazaRtImageSearchText}
+            onChange={(e) => handleUpdateUserInput('gazaRtImageSearchText', e.target.value)}
+            fullWidth
+          />
+
+          <TextField
+            label="Gaza RT Image Search Position"
+            type="number"
+            value={userInput.gazaRtImageSearchPosition}
+            onChange={(e) => handleUpdateUserInput('gazaRtImageSearchPosition', Number(e.target.value))}
+            fullWidth
+          />
+        </Box>
       </Box>
     </Box>
   );

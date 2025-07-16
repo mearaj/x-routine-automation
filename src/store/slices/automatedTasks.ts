@@ -3,14 +3,17 @@ import {
   type AutomatedTasks,
   type AutomatedTasksStatus,
   AutomatedTaskStatusEnum,
+  type ControllerToLikeAndRtInput,
   type SourceReplies,
   type SourceToTargetReplies,
   type SourceTweetURL,
 } from "@/utils/automatedTasks.ts";
 import {
+  defaultUserInput,
   followingThresholdDuration,
   likeRtThresholdDuration,
-  minWaitingTimeForFollowing, minWaitingTimeForTweet,
+  minWaitingTimeForFollowing,
+  minWaitingTimeForTweet,
   sourceToTargetThresholdDuration
 } from "@/utils/common.ts";
 
@@ -29,7 +32,8 @@ const initialState: AutomatedTasks = {
   sourceToTargetThresholdDuration: sourceToTargetThresholdDuration,
   followingThresholdDuration: followingThresholdDuration,
   minWaitingTimeForFollowing,
-  minWaitingTimeForTweet
+  minWaitingTimeForTweet,
+  userInput: defaultUserInput,
 }
 
 const automatedTasks = createSlice({
@@ -84,14 +88,6 @@ const automatedTasks = createSlice({
         entry.isGaza = action.payload.isGaza;
       }
     },
-    setNewTargetTweetURLs: (
-      state: AutomatedTasks,
-      action: PayloadAction<{
-        targetURLs: string[]
-      }>
-    ) => {
-      state.targetTweetURLs = Array.from(new Set(action.payload.targetURLs));
-    },
     mergeSourceReplies: (
       state: AutomatedTasks,
       action: PayloadAction<{ sourceReplies: SourceReplies }>
@@ -137,11 +133,14 @@ const automatedTasks = createSlice({
     setFollowingThresholdDuration: (state: AutomatedTasks, action: PayloadAction<number>) => {
       state.followingThresholdDuration = action.payload;
     },
-    setMinWaitingTimeForFollowing:  (state: AutomatedTasks, action: PayloadAction<number>) => {
+    setMinWaitingTimeForFollowing: (state: AutomatedTasks, action: PayloadAction<number>) => {
       state.minWaitingTimeForFollowing = action.payload;
     },
     setMinWaitingTimeForTweet: (state: AutomatedTasks, action: PayloadAction<number>) => {
       state.minWaitingTimeForTweet = action.payload;
+    },
+    setUserInput: (state: AutomatedTasks, action: PayloadAction<ControllerToLikeAndRtInput>) => {
+      state.userInput = action.payload;
     }
   },
 });

@@ -12,4 +12,5 @@ export function* watchAutomatedTasksSaga(): Generator {
   yield takeEvery(automatedTasksActions.setFollowingThresholdDuration.type, handleAppStateChange);
   yield takeEvery(automatedTasksActions.setLikeRtThresholdDuration.type, handleAppStateChange);
   yield takeEvery(automatedTasksActions.setSourceToTargetThresholdDuration.type, handleAppStateChange);
+  yield takeEvery(automatedTasksActions.setUserInput.type, handleAppStateChange);
 }

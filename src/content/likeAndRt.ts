@@ -3,6 +3,7 @@ import {PING_REQUEST, PONG_RESPONSE, REQUEST_LIKE_AND_RT, RESPONSE_LIKE_AND_RT,}
 import {wait} from "../utils/common.ts";
 import {waitForElement} from "../content/common.ts";
 import type {
+  ControllerToLikeAndRtInput,
   ControllerToLikeAndRtRequest,
   LikeAndRtToControllerResponse,
   SourceReplies,
@@ -92,7 +93,7 @@ async function likeAndRtProcessor(message: ControllerToLikeAndRtRequest, sendRes
   const isReallyGaza = isGaza || !!message.isGaza;
   try {
     response.url = tweetUrl;
-    response = await likeAndRtPinnedPostOnProfile(response, tweet, isReallyGaza, message.sourceReplies, message.threshold);
+    response = await likeAndRtPinnedPostOnProfile(response, tweet, isReallyGaza, message.sourceReplies, message.threshold, message.userInput);
   } catch (e) {
     console.error(e)
   }
@@ -159,7 +160,7 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
   return {tweetUrl: tweetUrl, tweet: tweet, isFundraiser: matched, isGaza: isGaza};
 }
 
-async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerResponse, tweet:HTMLElement, isGaza: boolean, sourceReplies: SourceReplies, threshold: number): Promise<LikeAndRtToControllerResponse> {
+async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerResponse, tweet: HTMLElement, isGaza: boolean, sourceReplies: SourceReplies, threshold: number, userInput: ControllerToLikeAndRtInput): Promise<LikeAndRtToControllerResponse> {
   const like = tweet.querySelector("button[data-testid='like']") as HTMLElement | null;
   const retweet = tweet.querySelector("button[data-testid='retweet']") as HTMLElement | null;
   if (like) {
@@ -171,8 +172,8 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     await wait(1000);
   }
 
-  const repostMenuItem = Array.from(document.querySelectorAll("div[role='menuitem']"))
-  .find(el => el.textContent?.trim().toLowerCase() === "repost") as HTMLElement | undefined;
+  // for undo repost data-testid='unretweetConfirm'
+  const repostMenuItem = document.querySelector("div[role='menuitem'][data-testid='retweetConfirm']") as HTMLElement | null;
   if (repostMenuItem) {
     repostMenuItem.click();
     await wait(1500);
@@ -188,12 +189,15 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   }
   response.timestamp = Date.now();
 
-  let text = "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ\n" +
-    "❤️ 💔 🤲 🇵🇸";
-  let imageText = "Save Gaza";
+  let text = userInput.gazaRtText;
+  let imageText = userInput.gazaRtImageSearchText;
+  let position = userInput.gazaRtImageSearchPosition;
+  let quoteText = userInput.gazaRtQuoteText;
   if (!isGaza) {
-    text = "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ";
-    imageText = "together we will rebuild";
+    text = userInput.rtText;
+    imageText = userInput.rtImageSearchText;
+    position = userInput.rtImageSearchPosition;
+    quoteText = userInput.quoteText;
   }
 
   const commentButton = tweet.querySelector("button[data-testid='reply']") as HTMLElement | null;
@@ -275,16 +279,21 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     const gifButtons = Array.from(modalBox.querySelectorAll('button'))
     .filter(btn => btn.querySelector('[data-testid="gifSearchGifImage"]')) as HTMLElement[];
 
-    for (const btn of gifButtons) {
-      const visible = btn.offsetParent !== null;
-      if (visible) {
-        btn.scrollIntoView({block: 'center'});
-        await wait(300);
-        btn.click();
-        await wait(1500);
-        break;
-      }
+    const visibleGifButtons = gifButtons.filter(btn => btn.offsetParent !== null);
+
+    const positionIndex = Math.min(
+      Math.max(position ?? 0, 0), // Ensure position is >= 0
+      visibleGifButtons.length - 1 // Cap it within bounds
+    );
+
+    const selectedGifBtn = visibleGifButtons[positionIndex];
+    if (selectedGifBtn) {
+      selectedGifBtn.scrollIntoView({block: 'center'});
+      await wait(300);
+      selectedGifBtn.click();
+      await wait(1500);
     }
+
 
     const postReplyBtn = modalBox.querySelector('button[data-testid="tweetButton"]:not([disabled])') as HTMLElement | null;
     if (postReplyBtn) {
@@ -309,8 +318,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     }
   }
 
-  const quoteMenuItem = Array.from(document.querySelectorAll("a[role='menuitem']"))
-  .find(el => el.textContent?.trim().toLowerCase() === "quote") as HTMLElement | undefined;
+  const quoteMenuItem = document.querySelector('a[role="menuitem"][href="/compose/post"]') as HTMLElement | null;
 
   if (!quoteMenuItem) {
     response.error = "❌ Quote menu item not found.";
@@ -318,11 +326,9 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     return response;
   }
 
-  // Click the "Quote" menu item
   quoteMenuItem.click();
-
-  // Wait for the editor to appear
   await wait(2500);
+
   let editor = document.querySelector('div.public-DraftEditor-content[contenteditable="true"]') as HTMLElement | null;
   if (!editor) {
     response.error = "❌ Quote editor not found."
@@ -330,12 +336,10 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     return response;
   }
 
-  // Focus and paste full text
-  const fullText = `👇👇👇👇👇`;
   editor.focus();
 
   const data = new DataTransfer();
-  data.setData("text/plain", fullText);
+  data.setData("text/plain", quoteText);
   const pasteEvent = new ClipboardEvent("paste", {
     clipboardData: data,
     bubbles: true,

@@ -3,6 +3,7 @@ import type {RootState} from "../store";
 import {AutomatedTaskStatusEnum} from "../utils/automatedTasks.ts";
 import type {Following} from "../utils/following.ts";
 import {
+  defaultUserInput,
   followingThresholdDuration as commonFollowingThresholdDuration,
   likeRtThresholdDuration as commonLikeRtThresholdDuration,
   minWaitingTimeForFollowing,
@@ -24,6 +25,7 @@ export const saveAppStateToStorage = async (appState: RootState): Promise<void> 
     await chrome.storage.local.set({[`${userState.activeUsername}:likeRtThresholdDuration`]: automatedTasksState.likeRtThresholdDuration});
     await chrome.storage.local.set({[`${userState.activeUsername}:sourceToTargetThresholdDuration`]: automatedTasksState.sourceToTargetThresholdDuration});
     await chrome.storage.local.set({[`${userState.activeUsername}:followingThresholdDuration`]: automatedTasksState.followingThresholdDuration});
+    await chrome.storage.local.set({[`${userState.activeUsername}:userInput`]: automatedTasksState.userInput});
   }
 }
 
@@ -56,7 +58,8 @@ export const getAppStateFromStorage = async (): Promise<RootState> => {
         followingThresholdDuration: commonFollowingThresholdDuration,
         targetTweetURLs: [],
         minWaitingTimeForFollowing,
-        minWaitingTimeForTweet
+        minWaitingTimeForTweet,
+        userInput: defaultUserInput,
       },
     } as RootState;
   }
@@ -99,6 +102,11 @@ export const getAppStateFromStorage = async (): Promise<RootState> => {
       `${activeUsername}:followingThresholdDuration`
       ] ?? commonFollowingThresholdDuration;
 
+  const userInput =
+    (await chrome.storage.local.get([`${activeUsername}:userInput`]))[
+      `${activeUsername}:userInput`
+      ] ?? defaultUserInput;
+
   return {
     user: {
       fundraiserExcludedURLs,
@@ -121,7 +129,8 @@ export const getAppStateFromStorage = async (): Promise<RootState> => {
       sourceTweetURLs: [],
       targetTweetURLs: [],
       minWaitingTimeForFollowing,
-      minWaitingTimeForTweet
+      minWaitingTimeForTweet,
+      userInput,
     },
   } as RootState;
 };
