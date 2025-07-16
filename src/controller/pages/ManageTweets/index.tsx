@@ -303,6 +303,15 @@ function ManageTweetsPage() {
           />
 
           <TextField
+            label="Quote Text"
+            multiline
+            minRows={3}
+            value={userInput.quoteText}
+            onChange={(e) => handleUpdateUserInput('quoteText', e.target.value)}
+            fullWidth
+          />
+
+          <TextField
             label="Gaza RT Text"
             multiline
             minRows={3}
@@ -325,6 +334,14 @@ function ManageTweetsPage() {
             type="number"
             value={userInput.gazaRtImageSearchPosition}
             onChange={(e) => handleUpdateUserInput('gazaRtImageSearchPosition', Number(e.target.value))}
+            fullWidth
+          />
+          <TextField
+            label="Gaza Quote Text"
+            multiline
+            minRows={3}
+            value={userInput.gazaQuoteText}
+            onChange={(e) => handleUpdateUserInput('gazaQuoteText', e.target.value)}
             fullWidth
           />
         </Box>
