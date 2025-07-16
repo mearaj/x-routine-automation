@@ -14,3 +14,4 @@ export const sourceToTargetThresholdDurationSelector = (state: RootState)=> stat
 export const sourceRepliesSelector = (state: RootState)=> state.automatedTasks.sourceReplies;
 export const minWaitingTimeForFollowingSelector = (state:RootState)=> state.automatedTasks.minWaitingTimeForFollowing
 export const minWaitingTimeForTweetSelector = (state:RootState)=> state.automatedTasks.minWaitingTimeForTweet
+export const userInputSelector = (state:RootState)=> state.automatedTasks.userInput;

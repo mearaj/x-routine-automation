@@ -25,6 +25,7 @@ import {
   sourceRepliesSelector,
   sourceToTargetThresholdDurationSelector,
   sourceTweetURLsSelector,
+  userInputSelector,
   userStateSelector
 } from "@/store/selectors.ts";
 import type {Following} from "@/utils/following.ts";
@@ -146,6 +147,7 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
     const sourceReplies: SourceReplies = yield select(sourceRepliesSelector);
     const likeRtThresholdDuration: number = yield select(likeRtThresholdDurationSelector);
     const sourceToTargetThresholdDuration: number = yield select(sourceToTargetThresholdDurationSelector);
+    const userInput = yield select(userInputSelector);
     if (tweetURL) {
       if (yield* shouldStopProcessing(tabId, targetURLsToTabIdMap)) {
         return;
@@ -185,6 +187,7 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
             isFundraiser: true,
             isGaza: tweetURL.isGaza,
             timestamp: sourceReplies[tweetURL.url]?.timestamp ?? 0,
+            userInput,
           }
           const startTime = Date.now();
           const response: LikeAndRtToControllerResponse = yield call(sendMessageToTab, tabId, request);
@@ -238,6 +241,7 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
           sourceReplies,
           threshold: likeRtThresholdDuration,
           fundraiserExcludedURLs,
+          userInput,
         }
         const startTime = Date.now();
         const response: LikeAndRtToControllerResponse = yield call(sendMessageToTab, tabId, request);
