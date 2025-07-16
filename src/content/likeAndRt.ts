@@ -192,7 +192,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   let text = userInput.gazaRtText;
   let imageText = userInput.gazaRtImageSearchText;
   let position = userInput.gazaRtImageSearchPosition;
-  let quoteText = userInput.gazaRtQuoteText;
+  let quoteText = userInput.gazaQuoteText;
   if (!isGaza) {
     text = userInput.rtText;
     imageText = userInput.rtImageSearchText;

@@ -60,7 +60,7 @@ export interface ControllerToLikeAndRtInput {
   gazaRtText: string;
   gazaRtImageSearchText: string;
   gazaRtImageSearchPosition: number;
-  gazaRtQuoteText: string;
+  gazaQuoteText: string;
 }
 
 export interface ControllerToLikeAndRtRequest {

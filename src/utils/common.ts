@@ -23,5 +23,5 @@ export const defaultUserInput: ControllerToLikeAndRtInput = {
   gazaRtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ\n" + "❤️ 💔 🤲 🇵🇸",
   gazaRtImageSearchText: "Save Gaza",
   gazaRtImageSearchPosition: 0,
-  gazaRtQuoteText: "👇👇👇👇👇",
+  gazaQuoteText: "👇👇👇👇👇",
 }
