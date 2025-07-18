@@ -143,7 +143,7 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
   let following: Following | undefined = yield* getFirstFilteredFollowing();
 
   while (tweetURL || following) {
-    const verifiedRadioWaterMelonUsers = Array.from((yield select(verifiedByRadioWaterMelonSelector)) as Set<string>);
+    const verifiedRadioWaterMelonUsers = Array.from(((yield select(verifiedByRadioWaterMelonSelector)).data) as Set<string>);
     yield delay(1000); // always wait at least one second
     const sourceReplies: SourceReplies = yield select(sourceRepliesSelector);
     const likeRtThresholdDuration: number = yield select(likeRtThresholdDurationSelector);
