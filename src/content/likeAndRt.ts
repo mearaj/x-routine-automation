@@ -1,7 +1,7 @@
 // content/likeAndRt.ts
 import {PING_REQUEST, PONG_RESPONSE, REQUEST_LIKE_AND_RT, RESPONSE_LIKE_AND_RT,} from "../utils/keys";
 import {wait} from "../utils/common.ts";
-import {waitForElement} from "../content/common.ts";
+import {extractUsername, waitForElement} from "../content/common.ts";
 import type {
   ControllerToLikeAndRtInput,
   ControllerToLikeAndRtRequest,
@@ -93,7 +93,7 @@ async function likeAndRtProcessor(message: ControllerToLikeAndRtRequest, sendRes
   const isReallyGaza = isGaza || !!message.isGaza;
   try {
     response.url = tweetUrl;
-    response = await likeAndRtPinnedPostOnProfile(response, tweet, isReallyGaza, message.sourceReplies, message.threshold, message.userInput);
+    response = await likeAndRtPinnedPostOnProfile(response, tweet, isReallyGaza, message.sourceReplies, message.threshold, message.userInput, message.verifiedRadioWaterMelonUsers);
   } catch (e) {
     console.error(e)
   }
@@ -160,7 +160,7 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
   return {tweetUrl: tweetUrl, tweet: tweet, isFundraiser: matched, isGaza: isGaza};
 }
 
-async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerResponse, tweet: HTMLElement, isGaza: boolean, sourceReplies: SourceReplies, threshold: number, userInput: ControllerToLikeAndRtInput): Promise<LikeAndRtToControllerResponse> {
+async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerResponse, tweet: HTMLElement, isGaza: boolean, sourceReplies: SourceReplies, threshold: number, userInput: ControllerToLikeAndRtInput, verifiedRadioWaterMelonUsers: string[]): Promise<LikeAndRtToControllerResponse> {
   const like = tweet.querySelector("button[data-testid='like']") as HTMLElement | null;
   const retweet = tweet.querySelector("button[data-testid='retweet']") as HTMLElement | null;
   if (like) {
@@ -189,6 +189,14 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   }
   response.timestamp = Date.now();
 
+  const usernameExtracted = extractUsername(response.url);
+  console.log("usernameExtracted", usernameExtracted);
+  let isWaterMelonVerified = false;
+  if (usernameExtracted) {
+    isWaterMelonVerified = verifiedRadioWaterMelonUsers.includes(usernameExtracted.toLowerCase());
+  }
+  isGaza = isGaza || isWaterMelonVerified;
+
   let text = userInput.gazaRtText;
   let imageText = userInput.gazaRtImageSearchText;
   let position = userInput.gazaRtImageSearchPosition;
@@ -198,6 +206,9 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     imageText = userInput.rtImageSearchText;
     position = userInput.rtImageSearchPosition;
     quoteText = userInput.quoteText;
+  }
+  if (isWaterMelonVerified) {
+    quoteText = "#VerifiedByRadioWaterMelon " + quoteText;
   }
 
   const commentButton = tweet.querySelector("button[data-testid='reply']") as HTMLElement | null;
@@ -242,13 +253,11 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
 
   await wait(200);
   if (replyBox && modalBox) {
-    // Click to focus the reply box
     const box = replyBox.getBoundingClientRect();
     window.scrollTo({top: box.top + window.scrollY - 100, behavior: 'smooth'});
     replyBox.click();
     await wait(1000);
 
-// Paste reply text
     const data = new DataTransfer();
     data.setData("text/plain", text);
     const pasteEvent = new ClipboardEvent("paste", {

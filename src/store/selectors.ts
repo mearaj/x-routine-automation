@@ -15,3 +15,4 @@ export const sourceRepliesSelector = (state: RootState)=> state.automatedTasks.s
 export const minWaitingTimeForFollowingSelector = (state:RootState)=> state.automatedTasks.minWaitingTimeForFollowing
 export const minWaitingTimeForTweetSelector = (state:RootState)=> state.automatedTasks.minWaitingTimeForTweet
 export const userInputSelector = (state:RootState)=> state.automatedTasks.userInput;
+export const verifiedByRadioWaterMelonSelector = (state:RootState)=> state.globalAppState.verifiedByRadioWaterMelonState;

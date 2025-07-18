@@ -25,13 +25,15 @@ import {
   minWaitingTimeForTweetSelector,
   sourceToTargetThresholdDurationSelector,
   sourceTweetURLsSelector,
-  targetTweetURLsSelector
+  targetTweetURLsSelector,
+  verifiedByRadioWaterMelonSelector
 } from "@/store/selectors.ts";
 import {defaultUserInput} from "@/utils/common.ts";
+import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
 
 function ManageTweetsPage() {
   const dispatch = useAppDispatch();
-
+  const verifiedByRadioWaterMelon = useAppSelector(verifiedByRadioWaterMelonSelector);
   const activeUsername = useAppSelector(activeUsernameSelector);
   const sourceUrls = useAppSelector(sourceTweetURLsSelector);
   const targetUrls = useAppSelector(targetTweetURLsSelector);
@@ -253,19 +255,60 @@ function ManageTweetsPage() {
       </Box>
 
       <Box mt={4} display="flex" alignItems="center" gap={2}>
-        <Button
-          variant="contained"
-          color={replyStatus === "Running" ? "error" : "primary"}
-          size="large"
-          onClick={replyStatus === "Running" ? handleStopLikeAndRt : handleStartLikeAndRt}
-        >
-          {replyStatus === "Running" ? "Stop Like And Retweet" : "Start Like and Retweet"}
-        </Button>
+  <Button
+    variant="contained"
+    color={replyStatus === "Running" ? "error" : "primary"}
+    size="large"
+    onClick={replyStatus === "Running" ? handleStopLikeAndRt : handleStartLikeAndRt}
+  >
+    {replyStatus === "Running" ? "Stop Like And Retweet" : "Start Like and Retweet"}
+  </Button>
 
-        <Typography variant="subtitle1">
-          Status: <strong>{replyStatus}</strong>
-        </Typography>
-      </Box>
+  <Typography variant="subtitle1">
+    Status: <strong>{replyStatus}</strong>
+  </Typography>
+
+  <Button
+    variant="outlined"
+    size="large"
+    disabled={verifiedByRadioWaterMelon.state === "loading"}
+    onClick={() => {
+      dispatch(globalAppStateActions.setVerifiedByRadioWaterMelonState({
+        data: new Set(verifiedByRadioWaterMelon.data),
+        state: "loading"
+      }));
+    }}
+  >
+    Fetch Radio Watermelon Users
+  </Button>
+
+  <Typography variant="subtitle1">
+    Watermelon: <strong>{verifiedByRadioWaterMelon.state}</strong>
+  </Typography>
+
+  <Button
+    variant="outlined"
+    size="large"
+    onClick={() => {
+      const sortedUsernames = Array.from(verifiedByRadioWaterMelon.data)
+        .map(u => u.trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b));
+
+      const blob = new Blob([sortedUsernames.join('\n')], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'verifiedUsers.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }}
+  >
+    Export Verified Users
+  </Button>
+</Box>
+
+
       <Box mt={4} display="flex" justifyContent="flex-start">
         <Button variant="outlined" onClick={handleResetUserInput}>
           Reset to Default
