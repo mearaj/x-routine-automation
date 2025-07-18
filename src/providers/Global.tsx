@@ -1,7 +1,15 @@
 import {type ReactNode, useEffect} from "react";
+import {useAppDispatch} from "@/store";
+import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
 
 
 function GlobalProvider({children}: Readonly<{ children: ReactNode }>) {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(globalAppStateActions.setVerifiedByRadioWaterMelonState({data: new Set(), state: "loading"}));
+  }, [dispatch]);
+
   useEffect(() => {
     const controllerUrl = chrome.runtime.getURL("controller.html");
 

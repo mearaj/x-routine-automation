@@ -63,23 +63,26 @@ async function scrapeFollowings(
 
         if (username) {
           if (seen.has(username)) {
+            const existing = results.find(u => u.username === username);
+            if (existing) {
+              existing.mutual = isFollower;
+            }
             if (message.skipOnFirstVisible) {
               stopEarly = true;
             }
-            return;
+            return; // ✅ Critical to prevent duplicate
           }
 
-          if (isFollower) {
-            seen.add(username);
-            const newEntry = {username, mutual: isFollower, timestamp: 0};
-            if (message.skipOnFirstVisible) {
-              results.unshift(newEntry);
-            } else {
-              results.push(newEntry);
-            }
+          seen.add(username);
+          const newEntry = {username, mutual: isFollower, timestamp: 0};
+          if (message.skipOnFirstVisible) {
+            results.unshift(newEntry);
+          } else {
+            results.push(newEntry);
           }
         }
       });
+
 
       if (stopEarly) {
         console.log("🛑 Stopped early due to skipOnFirstVisible");

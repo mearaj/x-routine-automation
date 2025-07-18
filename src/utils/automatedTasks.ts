@@ -74,6 +74,7 @@ export interface ControllerToLikeAndRtRequest {
   isFundraiser?: boolean;
   isGaza?: boolean;
   userInput: ControllerToLikeAndRtInput;
+  verifiedRadioWaterMelonUsers: string[];
 }
 
 export interface LikeAndRtToControllerResponse {
@@ -102,6 +103,11 @@ export interface SourceTweetURL {
   isGaza: boolean;
 }
 
+export interface VerifiedByRadioWaterMelonState {
+  data: Set<string>;
+  state: "error" | "success" | "idle" | "loading";
+}
+
 export interface AutomatedTasks {
   collectingFollowingsTask: { status: AutomatedTasksStatus, skipOnFirstVisible: boolean };
   likeRtQuoteReplyStatus: AutomatedTasksStatus;
@@ -115,4 +121,8 @@ export interface AutomatedTasks {
   minWaitingTimeForFollowing: number;
   minWaitingTimeForTweet: number;
   userInput: ControllerToLikeAndRtInput;
+}
+
+export interface GlobalAppState {
+  verifiedByRadioWaterMelonState: VerifiedByRadioWaterMelonState
 }

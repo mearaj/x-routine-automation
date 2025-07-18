@@ -141,7 +141,7 @@ const automatedTasks = createSlice({
     },
     setUserInput: (state: AutomatedTasks, action: PayloadAction<ControllerToLikeAndRtInput>) => {
       state.userInput = action.payload;
-    }
+    },
   },
 });
 

@@ -29,7 +29,10 @@ export const saveAppStateToStorage = async (appState: RootState): Promise<void> 
   }
 }
 
-export const getAppStateFromStorage = async (): Promise<RootState> => {
+export const getAppStateFromStorage = async (): Promise<{
+  automatedTasks: RootState["automatedTasks"],
+  user: RootState["user"]
+}> => {
   const activeUsername =
     (await chrome.storage.local.get([ACTIVE_USERNAME_KEY]))[ACTIVE_USERNAME_KEY];
   const usernames: string[] =
@@ -60,8 +63,12 @@ export const getAppStateFromStorage = async (): Promise<RootState> => {
         minWaitingTimeForFollowing,
         minWaitingTimeForTweet,
         userInput: defaultUserInput,
+        verifiedByRadioWaterMelonState: {
+          data: new Set<string>(),
+          state: "idle",
+        }
       },
-    } as RootState;
+    } as { automatedTasks: RootState["automatedTasks"], user: RootState["user"] };
   }
 
   const fundraiserURLs =
@@ -131,6 +138,10 @@ export const getAppStateFromStorage = async (): Promise<RootState> => {
       minWaitingTimeForFollowing,
       minWaitingTimeForTweet,
       userInput,
+      verifiedByRadioWaterMelonState: {
+        data: new Set<string>(),
+        state: "idle",
+      }
     },
-  } as RootState;
+  } as { automatedTasks: RootState["automatedTasks"], user: RootState["user"] };
 };
