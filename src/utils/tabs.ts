@@ -38,3 +38,6 @@ export function updateTab(tabId: number, updateProperties: chrome.tabs.UpdatePro
   return chrome.tabs.update(tabId, updateProperties);
 }
 
+export function removeTab(tabId: number): Promise<void> {
+  return chrome.tabs.remove(tabId);
+}

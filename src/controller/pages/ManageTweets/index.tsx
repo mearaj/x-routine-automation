@@ -28,8 +28,9 @@ import {
   targetTweetURLsSelector,
   verifiedByRadioWaterMelonSelector
 } from "@/store/selectors.ts";
-import {defaultUserInput} from "@/utils/common.ts";
+import {defaultUserInput, extractUsername} from "@/utils/common.ts";
 import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
+
 
 function ManageTweetsPage() {
   const dispatch = useAppDispatch();
@@ -47,6 +48,17 @@ function ManageTweetsPage() {
 
   const [newSource, setNewSource] = useState<SourceTweetURL>({url: '', isGaza: true});
   const [newTargetUrl, setNewTargetUrl] = useState('');
+  const [checkUsernameInput, setCheckUsernameInput] = useState('');
+  const watermelonUsernames = verifiedByRadioWaterMelon.data;
+  const resolvedUsername = extractUsername(checkUsernameInput);
+  const normalizedVerifiedSet = new Set(
+    Array.from(watermelonUsernames).map(u => u.toLowerCase())
+  );
+  const isVerified = resolvedUsername
+    ? normalizedVerifiedSet.has(resolvedUsername.toLowerCase())
+    : null;
+  const [removeHistoryInput, setRemoveHistoryInput] = useState('');
+
 
   const handleAddSource = () => {
     const trimmed = newSource.url.trim();
@@ -85,23 +97,37 @@ function ManageTweetsPage() {
   };
 
   const handleUpdateLikeThreshold = (e: ChangeEvent<HTMLInputElement>) => {
-    dispatch(automatedTasksActions.setLikeRtThresholdDuration(Number(e.target.value)));
+    const minutes = Number(e.target.value);
+    if (!isNaN(minutes)) {
+     dispatch(automatedTasksActions.setLikeRtThresholdDuration(minutes * 60000));
+    }
   };
 
   const handleUpdateSourceToTargetThreshold = (e: ChangeEvent<HTMLInputElement>) => {
-    dispatch(automatedTasksActions.setSourceToTargetThresholdDuration(Number(e.target.value)));
+    const minutes = Number(e.target.value);
+    if (!isNaN(minutes)) {
+     dispatch(automatedTasksActions.setSourceToTargetThresholdDuration(minutes * 60000));
+    }
   };
 
   const handleUpdateFollowingThreshold = (e: ChangeEvent<HTMLInputElement>) => {
-    dispatch(automatedTasksActions.setFollowingThresholdDuration(Number(e.target.value)));
+    const minutes = Number(e.target.value);
+    if (!isNaN(minutes)) {
+     dispatch(automatedTasksActions.setFollowingThresholdDuration(minutes * 60000));
+    }
   };
-
   const handleUpdateMinWaitFollowing = (e: ChangeEvent<HTMLInputElement>) => {
-    dispatch(automatedTasksActions.setMinWaitingTimeForFollowing(Number(e.target.value)));
+    const seconds = Number(e.target.value);
+    if (!isNaN(seconds)) {
+     dispatch(automatedTasksActions.setMinWaitingTimeForFollowing(seconds * 1000));
+    }
   };
 
   const handleUpdateMinWaitTweet = (e: ChangeEvent<HTMLInputElement>) => {
-    dispatch(automatedTasksActions.setMinWaitingTimeForTweet(Number(e.target.value)));
+    const seconds = Number(e.target.value);
+    if (!isNaN(seconds)) {
+     dispatch(automatedTasksActions.setMinWaitingTimeForTweet(seconds * 1000));
+    }
   };
 
   const handleUpdateUserInput = <K extends keyof ControllerToLikeAndRtInput>(
@@ -117,7 +143,6 @@ function ManageTweetsPage() {
   const handleResetUserInput = () => {
     dispatch(automatedTasksActions.setUserInput(defaultUserInput));
   };
-
 
   return (
     <Box p={2}>
@@ -207,45 +232,72 @@ function ManageTweetsPage() {
       </Box>
 
       <Box mt={4}>
-        <Typography variant="h6">Threshold Durations (ms)</Typography>
+        <Typography variant="h6">Remove Source URL from History</Typography>
+        <Box display="flex" gap={1} mt={1}>
+          <TextField
+            label="Source URL to Remove"
+            value={removeHistoryInput}
+            onChange={(e) => setRemoveHistoryInput(e.target.value)}
+            fullWidth
+            size="small"
+          />
+          <Button
+            variant="outlined"
+            onClick={() => {
+              const trimmed = removeHistoryInput.trim();
+              if (trimmed) {
+                dispatch(automatedTasksActions.removeSourceReplies([trimmed]));
+                setRemoveHistoryInput('');
+              }
+            }}
+            disabled={!removeHistoryInput.trim()}
+          >
+            Remove
+          </Button>
+        </Box>
+      </Box>
+
+
+      <Box mt={4}>
+        <Typography variant="h6">Threshold Durations</Typography>
         <Box display="flex" flexDirection="column" gap={2} mt={1}>
           <TextField
-            label="Like/RT Threshold"
+            label="Like/RT Threshold (minutes)"
             type="number"
-            value={likeThreshold}
+            value={likeThreshold / 60000}
             onChange={handleUpdateLikeThreshold}
             fullWidth
             size="small"
           />
           <TextField
-            label="Source to Target Reply Threshold"
+            label="Source to Target Reply Threshold (minutes)"
             type="number"
-            value={sourceToTargetThreshold}
+            value={sourceToTargetThreshold / 60000}
             onChange={handleUpdateSourceToTargetThreshold}
             fullWidth
             size="small"
           />
           <TextField
-            label="Following Threshold"
+            label="Following Threshold (minutes)"
             type="number"
-            value={followingThreshold}
+            value={followingThreshold / 60000}
             onChange={handleUpdateFollowingThreshold}
             fullWidth
             size="small"
           />
           <TextField
-            label="Min Wait Time (Following)"
+            label="Min Wait Time (Following) (seconds)"
             type="number"
-            value={followingWaitTime}
+            value={followingWaitTime / 1000 }
             onChange={handleUpdateMinWaitFollowing}
             fullWidth
             size="small"
           />
 
           <TextField
-            label="Min Wait Time (Tweet)"
+            label="Min Wait Time (Tweet) (seconds)"
             type="number"
-            value={tweetWaitTime}
+            value={tweetWaitTime / 1000}
             onChange={handleUpdateMinWaitTweet}
             fullWidth
             size="small"
@@ -255,58 +307,74 @@ function ManageTweetsPage() {
       </Box>
 
       <Box mt={4} display="flex" alignItems="center" gap={2}>
-  <Button
-    variant="contained"
-    color={replyStatus === "Running" ? "error" : "primary"}
-    size="large"
-    onClick={replyStatus === "Running" ? handleStopLikeAndRt : handleStartLikeAndRt}
-  >
-    {replyStatus === "Running" ? "Stop Like And Retweet" : "Start Like and Retweet"}
-  </Button>
+        <Button
+          variant="contained"
+          color={replyStatus === "Running" ? "error" : "primary"}
+          size="large"
+          onClick={replyStatus === "Running" ? handleStopLikeAndRt : handleStartLikeAndRt}
+        >
+          {replyStatus === "Running" ? "Stop Like And Retweet" : "Start Like and Retweet"}
+        </Button>
 
-  <Typography variant="subtitle1">
-    Status: <strong>{replyStatus}</strong>
-  </Typography>
+        <Typography variant="subtitle1">
+          Status: <strong>{replyStatus}</strong>
+        </Typography>
 
-  <Button
-    variant="outlined"
-    size="large"
-    disabled={verifiedByRadioWaterMelon.state === "loading"}
-    onClick={() => {
-      dispatch(globalAppStateActions.setVerifiedByRadioWaterMelonState({
-        data: new Set(verifiedByRadioWaterMelon.data),
-        state: "loading"
-      }));
-    }}
-  >
-    Fetch Radio Watermelon Users
-  </Button>
+        <Button
+          variant="outlined"
+          size="large"
+          disabled={verifiedByRadioWaterMelon.state === "loading"}
+          onClick={() => {
+            dispatch(globalAppStateActions.setVerifiedByRadioWaterMelonState({
+              data: new Set(verifiedByRadioWaterMelon.data),
+              state: "loading"
+            }));
+          }}
+        >
+          Fetch Radio Watermelon Users
+        </Button>
 
-  <Typography variant="subtitle1">
-    Watermelon: <strong>{verifiedByRadioWaterMelon.state}</strong>
-  </Typography>
+        <Typography variant="subtitle1">
+          Watermelon: <strong>{verifiedByRadioWaterMelon.state}</strong>
+        </Typography>
 
-  <Button
-    variant="outlined"
-    size="large"
-    onClick={() => {
-      const sortedUsernames = Array.from(verifiedByRadioWaterMelon.data)
-        .map(u => u.trim())
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b));
+        <Button
+          variant="outlined"
+          size="large"
+          onClick={() => {
+            const sortedUsernames = Array.from(verifiedByRadioWaterMelon.data)
+            .map(u => u.trim())
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b));
 
-      const blob = new Blob([sortedUsernames.join('\n')], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'verifiedUsers.txt';
-      a.click();
-      URL.revokeObjectURL(url);
-    }}
-  >
-    Export Verified Users
-  </Button>
-</Box>
+            const blob = new Blob([sortedUsernames.join('\n')], {type: 'text/plain;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'verifiedUsers.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          Export Verified Users
+        </Button>
+      </Box>
+
+
+      <Box mt={4} display="flex" alignItems="center" gap={2}>
+        <TextField
+          label="Check Watermelon User"
+          size="small"
+          value={checkUsernameInput}
+          onChange={(e) => setCheckUsernameInput(e.target.value)}
+          fullWidth
+        />
+        {checkUsernameInput.trim() !== '' && (
+          <Typography color={isVerified ? 'green' : 'red'}>
+            {isVerified ? '✅ Found' : '❌ Not Found'}
+          </Typography>
+        )}
+      </Box>
 
 
       <Box mt={4} display="flex" justifyContent="flex-start">

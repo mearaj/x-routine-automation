@@ -1,20 +1,11 @@
 // ManageURLsPage.tsx
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  List,
-  ListItem,
-  IconButton,
-  ListItemText
-} from "@mui/material";
-import { NavLink } from "react-router";
-import { ArrowBack, Delete } from "@mui/icons-material";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState } from "@/store/store.ts";
-import { userActions } from "@/store/slices/userSlice.ts";
-import { useState } from "react";
+import {Box, Button, IconButton, List, ListItem, ListItemText, TextField, Typography} from "@mui/material";
+import {NavLink} from "react-router";
+import {ArrowBack, Delete} from "@mui/icons-material";
+import {useDispatch, useSelector} from "react-redux";
+import type {RootState} from "@/store/store.ts";
+import {userActions} from "@/store/slices/userSlice.ts";
+import {useState} from "react";
 
 interface UrlManagerSectionProps {
   label: string;
@@ -22,7 +13,24 @@ interface UrlManagerSectionProps {
   urls: string[];
 }
 
-const UrlManagerSection = ({ label, excluded, urls }: UrlManagerSectionProps) => {
+const defaultFundraiserURLs = [
+  "https://zeffy.com",
+  "https://gofundme.com",
+  "https://paypal.com",
+  "https://gogetfunding.com",
+  "https://gofund.me",
+  "https://paypal.me",
+  "https://social.fund",
+  "https://ko-fi.com",
+  "https://yemenstarving.org",
+  "https://chuffed.org",
+  "https://donorbox.org",
+  "https://spot.fund",
+  "https://remitly.com",
+  "https://www.remitly.com/",
+]
+
+const UrlManagerSection = ({label, excluded, urls}: UrlManagerSectionProps) => {
   const dispatch = useDispatch();
   const activeUsername = useSelector((state: RootState) => state.user.activeUsername);
   const [newURL, setNewURL] = useState('');
@@ -40,15 +48,27 @@ const UrlManagerSection = ({ label, excluded, urls }: UrlManagerSectionProps) =>
     );
 
     normalized.forEach(url => {
-      dispatch(userActions.addFundraiserUrlForActiveUser({ url, excluded }));
+      dispatch(userActions.addFundraiserUrlForActiveUser({url, excluded}));
     });
 
     setNewURL('');
   };
 
+  const handleAddDefaults = () => {
+    if (!activeUsername) return;
+
+    const currentSet = new Set(urls);
+    defaultFundraiserURLs.forEach((url) => {
+      const normalized = url.trim();
+      if (!currentSet.has(normalized)) {
+        dispatch(userActions.addFundraiserUrlForActiveUser({url: normalized, excluded}));
+      }
+    });
+  };
+
   const handleRemove = (url: string) => {
     if (activeUsername) {
-      dispatch(userActions.removeUrlForActiveUser({ url, excluded }));
+      dispatch(userActions.removeUrlForActiveUser({url, excluded}));
     }
   };
 
@@ -56,7 +76,7 @@ const UrlManagerSection = ({ label, excluded, urls }: UrlManagerSectionProps) =>
     <Box mt={4}>
       <Typography variant="h6">{label}</Typography>
 
-      <Box mt={2} display="flex" gap={1}>
+      <Box mt={2} display="flex" gap={1} flexWrap="wrap">
         <TextField
           label="Enter URL(s)"
           size="small"
@@ -67,9 +87,15 @@ const UrlManagerSection = ({ label, excluded, urls }: UrlManagerSectionProps) =>
         <Button variant="contained" onClick={handleAdd} disabled={!newURL.trim()}>
           Add
         </Button>
+
+        {!excluded && (
+          <Button variant="outlined" onClick={handleAddDefaults}>
+            Add Default Fundraisers
+          </Button>
+        )}
       </Box>
 
-      <List dense sx={{ mt: 2 }}>
+      <List dense sx={{mt: 2}}>
         {urls.map((url) => (
           <ListItem
             key={url}
@@ -99,7 +125,7 @@ const ManageURLsPage = () => {
 
   return (
     <Box p={2}>
-      <NavLink to="../"><ArrowBack /></NavLink>
+      <NavLink to="../"><ArrowBack/></NavLink>
 
       {activeUsername && (
         <Typography gutterBottom>

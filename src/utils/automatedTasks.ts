@@ -1,7 +1,7 @@
 import {
   REQUEST_LIKE_AND_RT,
   REQUEST_REPLY_WITH_URL,
-  REQUEST_START_SCRAPE_FOLLOWINGS,
+  REQUEST_START_SCRAPE_FOLLOWINGS, REQUEST_STOP_SCRAPE_FOLLOWINGS,
   RESPONSE_LIKE_AND_RT,
   RESPONSE_REPLY_WITH_URL,
   RESPONSE_START_SCRAPE_FOLLOWINGS
@@ -39,10 +39,9 @@ export type SourceToTargetReplies = {
 
 
 export interface ControllerToFollowingRequest {
-  type: typeof REQUEST_START_SCRAPE_FOLLOWINGS;
+  type: typeof REQUEST_START_SCRAPE_FOLLOWINGS |typeof REQUEST_STOP_SCRAPE_FOLLOWINGS
   activeUsername: string;
   followings: Following[];
-  skipOnFirstVisible: boolean;
 }
 
 export interface FollowingToControllerResponse {
@@ -109,7 +108,7 @@ export interface VerifiedByRadioWaterMelonState {
 }
 
 export interface AutomatedTasks {
-  collectingFollowingsTask: { status: AutomatedTasksStatus, skipOnFirstVisible: boolean };
+  collectingFollowingsTask: AutomatedTasksStatus,
   likeRtQuoteReplyStatus: AutomatedTasksStatus;
   sourceTweetURLs: SourceTweetURL[];
   targetTweetURLs: string[];

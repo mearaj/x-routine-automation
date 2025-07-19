@@ -1,21 +1,27 @@
-import {PING_REQUEST, PONG_RESPONSE, REQUEST_START_SCRAPE_FOLLOWINGS, RESPONSE_START_SCRAPE_FOLLOWINGS} from "../utils";
+import {
+  REQUEST_START_SCRAPE_FOLLOWINGS,
+  REQUEST_STOP_SCRAPE_FOLLOWINGS,
+  RESPONSE_START_SCRAPE_FOLLOWINGS
+} from "../utils";
 import type {Following} from "../utils/following.ts";
 import {wait} from "../utils/common.ts";
 import type {ControllerToFollowingRequest, FollowingToControllerResponse} from "../utils/automatedTasks.ts";
 
+let shouldStop = false;
+
 export function registerFollowingScraper() {
-  chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
+  chrome.runtime.onMessage.addListener((message: ControllerToFollowingRequest, _, sendResponse) => {
     if (message.type === REQUEST_START_SCRAPE_FOLLOWINGS && message.activeUsername) {
+      shouldStop = false; // ✅ Reset before starting
       scrapeFollowings(message, sendResponse);
       return true;
     }
-    if (message.type === PING_REQUEST) {
-      sendResponse({type: PONG_RESPONSE});
-      return true
+    if (message.type === REQUEST_STOP_SCRAPE_FOLLOWINGS) {
+      shouldStop = true;
+      return true;
     }
     return false;
   });
-
 }
 
 async function scrapeFollowings(
@@ -45,8 +51,12 @@ async function scrapeFollowings(
     const maxIdle = 10;
 
     while (idleTries < maxIdle) {
+      if (shouldStop) {
+        console.log("🛑 Scrape stopped by external message.");
+        break;
+      }
+
       const users = document.querySelectorAll('button[data-testid="UserCell"]');
-      let stopEarly = false;
 
       users.forEach((user) => {
         let username: string | null = null;
@@ -60,34 +70,20 @@ async function scrapeFollowings(
         });
 
         const isFollower = !!user.querySelector('[data-testid="userFollowIndicator"]');
+        if (!username) return;
 
-        if (username) {
-          if (seen.has(username)) {
-            const existing = results.find(u => u.username === username);
-            if (existing) {
-              existing.mutual = isFollower;
-            }
-            if (message.skipOnFirstVisible) {
-              stopEarly = true;
-            }
-            return; // ✅ Critical to prevent duplicate
+        if (seen.has(username)) {
+          const existing = results.find(u => u.username === username);
+          if (existing) {
+            existing.mutual = isFollower;
           }
-
-          seen.add(username);
-          const newEntry = {username, mutual: isFollower, timestamp: 0};
-          if (message.skipOnFirstVisible) {
-            results.unshift(newEntry);
-          } else {
-            results.push(newEntry);
-          }
+          return; // ✅ Prevent duplicate
         }
+
+        seen.add(username);
+        const newEntry = {username, mutual: isFollower, timestamp: 0};
+        results.push(newEntry);
       });
-
-
-      if (stopEarly) {
-        console.log("🛑 Stopped early due to skipOnFirstVisible");
-        break;
-      }
 
       if (users.length === lastCount) {
         idleTries++;
@@ -121,4 +117,3 @@ async function scrapeFollowings(
     });
   }
 }
-

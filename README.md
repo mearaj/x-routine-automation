@@ -25,7 +25,7 @@ Out of that realization, this extension was born — not only to help myself, bu
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/your-extension-repo.git
+git clone https://github.com/mearaj/x-routine-automation
 cd your-extension-repo
 ```
 

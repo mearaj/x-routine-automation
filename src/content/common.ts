@@ -70,7 +70,7 @@ export function getCurrentUsernameFromUrl(): string | null {
   return match ? match[1] : null;
 }
 
-export function extractUsername(url: string) {
+export function extractUsernameFromUrl(url: string) {
   try {
     const u = new URL(url);
     const pathSegments = u.pathname.split("/").filter(Boolean);
