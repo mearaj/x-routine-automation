@@ -48,10 +48,7 @@ export const getAppStateFromStorage = async (): Promise<{
         followings: [],
       },
       automatedTasks: {
-        collectingFollowingsTask: {
-          status: AutomatedTaskStatusEnum.Idle,
-          skipOnFirstVisible: false,
-        },
+        collectingFollowingsTask: AutomatedTaskStatusEnum.Idle,
         likeRtQuoteReplyStatus: AutomatedTaskStatusEnum.Idle,
         sourceTweetURLs: [],
         sourceReplies: {},
@@ -128,10 +125,7 @@ export const getAppStateFromStorage = async (): Promise<{
       likeRtThresholdDuration: likeRtThresholdDuration,
       sourceToTargetThresholdDuration: sourceToTargetThresholdDuration,
       followingThresholdDuration: followingThresholdDuration,
-      collectingFollowingsTask: {
-        status: AutomatedTaskStatusEnum.Idle,
-        skipOnFirstVisible: false,
-      },
+      collectingFollowingsTask: AutomatedTaskStatusEnum.Idle,
       likeRtQuoteReplyStatus: AutomatedTaskStatusEnum.Idle,
       sourceTweetURLs: [],
       targetTweetURLs: [],

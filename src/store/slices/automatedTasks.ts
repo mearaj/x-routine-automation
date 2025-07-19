@@ -19,10 +19,7 @@ import {
 
 
 const initialState: AutomatedTasks = {
-  collectingFollowingsTask: {
-    status: AutomatedTaskStatusEnum.Idle,
-    skipOnFirstVisible: false,
-  },
+  collectingFollowingsTask: AutomatedTaskStatusEnum.Idle,
   likeRtQuoteReplyStatus: AutomatedTaskStatusEnum.Idle,
   sourceTweetURLs: [],
   targetTweetURLs: [],
@@ -43,12 +40,8 @@ const automatedTasks = createSlice({
     rehydrateAutomationState: (state, action: PayloadAction<Partial<AutomatedTasks>>) => {
       return {...state, ...action.payload};
     },
-    setCollectingFollowingsStatus: (state: AutomatedTasks, action: PayloadAction<{
-      status: AutomatedTasksStatus,
-      skipOnFirstVisible: boolean
-    }>) => {
-      state.collectingFollowingsTask.status = action.payload.status;
-      state.collectingFollowingsTask.skipOnFirstVisible = action.payload.skipOnFirstVisible;
+    setCollectingFollowingsStatus: (state: AutomatedTasks, action: PayloadAction<AutomatedTasksStatus>) => {
+      state.collectingFollowingsTask = action.payload;
     },
     setlikeRtQuoteReplyStatus: (state: AutomatedTasks, action: PayloadAction<{ status: AutomatedTasksStatus, }>) => {
       state.likeRtQuoteReplyStatus = action.payload.status;
@@ -93,6 +86,14 @@ const automatedTasks = createSlice({
       action: PayloadAction<{ sourceReplies: SourceReplies }>
     ) => {
       state.sourceReplies = {...state.sourceReplies, ...action.payload.sourceReplies};
+    },
+    removeSourceReplies: (
+      state: AutomatedTasks,
+      action: PayloadAction<string[]>
+    ) => {
+      for (const key of action.payload) {
+        delete state.sourceReplies[key];
+      }
     },
     addTargetTweetURLs: (
       state: AutomatedTasks,

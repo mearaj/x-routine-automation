@@ -4,8 +4,6 @@ import {
   AccordionSummary,
   Box,
   Button,
-  Checkbox,
-  FormControlLabel,
   IconButton,
   List,
   ListItem,
@@ -28,15 +26,11 @@ function ManageFollowsPage() {
   const {activeUsername, followings} = useAppSelector(userStateSelector);
   const collectFollowingsTask = useAppSelector(collectFollowingsTaskSelector);
   const [newFollowing, setNewFollowing] = useState('');
-  const [skipOnFirstVisible, setSkipOnFirstVisible] = useState(collectFollowingsTask.skipOnFirstVisible ?? false);
   const [sortOrderAsc, setSortOrderAsc] = useState(true);
 
   const handleCollect = () => {
     if (!activeUsername) return;
-    dispatch(automatedTasksActions.setCollectingFollowingsStatus({
-      status: AutomatedTaskStatusEnum.Running,
-      skipOnFirstVisible
-    }));
+    dispatch(automatedTasksActions.setCollectingFollowingsStatus(AutomatedTaskStatusEnum.Running));
   };
 
   const handleAddFollowing = () => {
@@ -82,7 +76,7 @@ function ManageFollowsPage() {
 
   return (
     <Box p={2}>
-      <NavLink to="../"><ArrowBack /></NavLink>
+      <NavLink to="../"><ArrowBack/></NavLink>
 
       {activeUsername && (
         <Typography gutterBottom>
@@ -102,17 +96,6 @@ function ManageFollowsPage() {
       </Box>
 
       <Box mt={2} display="flex" flexDirection="column" gap={2}>
-
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={skipOnFirstVisible}
-              onChange={(e) => setSkipOnFirstVisible(e.target.checked)}
-            />
-          }
-          label="Skip on first visible"
-        />
-
         <Box display="flex" gap={1}>
           <Button
             variant={sortOrderAsc ? "contained" : "outlined"}
@@ -130,13 +113,19 @@ function ManageFollowsPage() {
 
         <Button
           variant="contained"
-          color="primary"
-          onClick={handleCollect}
+          color={collectFollowingsTask === AutomatedTaskStatusEnum.Running ? "error" : "primary"}
+          onClick={() => {
+            if (collectFollowingsTask === AutomatedTaskStatusEnum.Running) {
+              dispatch(automatedTasksActions.setCollectingFollowingsStatus(AutomatedTaskStatusEnum.Stopped));
+            } else {
+              handleCollect();
+            }
+          }}
           disabled={!activeUsername}
         >
-          Collect Followings
+          {collectFollowingsTask === AutomatedTaskStatusEnum.Running ? "Stop Collecting" : "Collect Followings"}
         </Button>
-        <Box>{collectFollowingsTask.status}</Box>
+        <Box>{collectFollowingsTask}</Box>
 
         <Button
           variant="outlined"
@@ -174,7 +163,7 @@ function ManageFollowsPage() {
       </Box>
 
       <Accordion>
-        <AccordionSummary expandIcon={<ExpandMore />}>
+        <AccordionSummary expandIcon={<ExpandMore/>}>
           <Typography variant="subtitle1">Followings ({followings.length})</Typography>
         </AccordionSummary>
         <AccordionDetails>
@@ -186,11 +175,11 @@ function ManageFollowsPage() {
                   disableGutters
                   secondaryAction={
                     <IconButton onClick={() => handleRemoveFollowing(f.username)} edge="end">
-                      <Delete />
+                      <Delete/>
                     </IconButton>
                   }
                 >
-                  <ListItemText primary={`${f.username} (${f.timestamp})`} />
+                  <ListItemText primary={`${f.username} (${f.timestamp})`}/>
                 </ListItem>
               ))}
             </List>
@@ -199,7 +188,7 @@ function ManageFollowsPage() {
       </Accordion>
 
       <Accordion>
-        <AccordionSummary expandIcon={<ExpandMore />}>
+        <AccordionSummary expandIcon={<ExpandMore/>}>
           <Typography variant="subtitle1">
             Non Followers (Non Mutual) ({nonMutualFollowings.length})
           </Typography>
@@ -213,16 +202,16 @@ function ManageFollowsPage() {
                   disableGutters
                   secondaryAction={
                     <Box display="flex" gap={1}>
-                      <Button onClick={() => chrome.tabs.update({ url: `https://x.com/${f.username}` })}>
+                      <Button onClick={() => chrome.tabs.update({url: `https://x.com/${f.username}`})}>
                         View
                       </Button>
                       <IconButton onClick={() => handleRemoveFollowing(f.username)} edge="end">
-                        <Delete />
+                        <Delete/>
                       </IconButton>
                     </Box>
                   }
                 >
-                  <ListItemText primary={`${f.username} (${f.timestamp})`} />
+                  <ListItemText primary={`${f.username} (${f.timestamp})`}/>
                 </ListItem>
               ))}
             </List>

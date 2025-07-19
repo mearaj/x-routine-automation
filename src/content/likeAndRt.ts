@@ -1,7 +1,7 @@
 // content/likeAndRt.ts
 import {PING_REQUEST, PONG_RESPONSE, REQUEST_LIKE_AND_RT, RESPONSE_LIKE_AND_RT,} from "../utils/keys";
 import {wait} from "../utils/common.ts";
-import {extractUsername, waitForElement} from "../content/common.ts";
+import {extractUsernameFromUrl, waitForElement} from "../content/common.ts";
 import type {
   ControllerToLikeAndRtInput,
   ControllerToLikeAndRtRequest,
@@ -165,7 +165,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   const retweet = tweet.querySelector("button[data-testid='retweet']") as HTMLElement | null;
   if (like) {
     like.click();
-    await wait(400);
+    await wait(600);
   }
   if (retweet) {
     retweet.click();
@@ -189,7 +189,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   }
   response.timestamp = Date.now();
 
-  const usernameExtracted = extractUsername(response.url);
+  const usernameExtracted = extractUsernameFromUrl(response.url);
   console.log("usernameExtracted", usernameExtracted);
   let isWaterMelonVerified = false;
   if (usernameExtracted) {
@@ -197,13 +197,13 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   }
   isGaza = isGaza || isWaterMelonVerified;
 
-  let text = userInput.gazaRtText;
-  let imageText = userInput.gazaRtImageSearchText;
+  let commentText = userInput.gazaRtText;
+  let imageSearchText = userInput.gazaRtImageSearchText;
   let position = userInput.gazaRtImageSearchPosition;
   let quoteText = userInput.gazaQuoteText;
   if (!isGaza) {
-    text = userInput.rtText;
-    imageText = userInput.rtImageSearchText;
+    commentText = userInput.rtText;
+    imageSearchText = userInput.rtImageSearchText;
     position = userInput.rtImageSearchPosition;
     quoteText = userInput.quoteText;
   }
@@ -259,7 +259,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     await wait(1000);
 
     const data = new DataTransfer();
-    data.setData("text/plain", text);
+    data.setData("text/plain", commentText);
     const pasteEvent = new ClipboardEvent("paste", {
       clipboardData: data,
       bubbles: true,
@@ -279,7 +279,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     if (gifInput) {
       gifInput.focus();
       gifInput.setRangeText('', 0, gifInput.value.length, 'end');
-      gifInput.setRangeText(imageText, 0, 0, 'end');
+      gifInput.setRangeText(imageSearchText, 0, 0, 'end');
       gifInput.dispatchEvent(new InputEvent('input', {bubbles: true}));
       await wait(3500);
     }

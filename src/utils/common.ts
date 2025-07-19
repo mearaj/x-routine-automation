@@ -10,11 +10,21 @@ export const matchesStatus = (url: string): boolean => {
 }
 
 
+export const extractUsername = (input: string): string | null => {
+  input = input.trim();
+  if (input.startsWith('@')) return input.slice(1);
+  if (/^[a-zA-Z0-9_]{1,15}$/.test(input)) return input;
+  const urlMatch = input.match(/^https?:\/\/(?:www\.)?(x|twitter)\.com\/([a-zA-Z0-9_]{1,15})(\/|$)/);
+  if (urlMatch) return urlMatch[2];
+
+  return null;
+};
+
 export const likeRtThresholdDuration = 1000 * 60 * 60 * 12;
 export const sourceToTargetThresholdDuration = 1000 * 60 * 60 * 12;
-export const followingThresholdDuration = 1000 * 60 * 60 * 4;
-export const minWaitingTimeForFollowing = 1000 * 15;
-export const minWaitingTimeForTweet = 1000 * 15;
+export const followingThresholdDuration = 1000 * 60 * 60 * 12;
+export const minWaitingTimeForFollowing = 1000 * 20;
+export const minWaitingTimeForTweet = 1000 * 20;
 export const defaultUserInput: ControllerToLikeAndRtInput = {
   rtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ",
   rtImageSearchText: "together we will rebuild",
