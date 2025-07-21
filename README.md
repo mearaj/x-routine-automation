@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="src/assets/SaveGaza.gif" alt="Save Gaza" />
+</p>
+
+
 # 🤖 Palestinian and Non-Palestinian Fundraiser Automation — Chrome Extension
 
 This extension was built out of necessity and compassion. While supporting Palestinian fundraisers and awareness posts on Twitter/X, I (Mearaj Bhagad) found myself repeatedly liking, retweeting, quoting, and replying to many of my followings' pinned tweets. It became clear: my behavior followed a pattern, and automating it could save hours.
