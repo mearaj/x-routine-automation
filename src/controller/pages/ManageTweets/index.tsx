@@ -18,6 +18,7 @@ import {AutomatedTaskStatusEnum, type ControllerToLikeAndRtInput, type SourceTwe
 import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
 import {
   activeUsernameSelector,
+  followingsSelector,
   followingThresholdDurationSelector,
   likeRtQuoteReplyStatusSelector,
   likeRtThresholdDurationSelector,
@@ -30,6 +31,7 @@ import {
 } from "@/store/selectors.ts";
 import {defaultUserInput, extractUsername} from "@/utils/common.ts";
 import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
+import {userActions} from "@/store/slices/userSlice.ts";
 
 
 function ManageTweetsPage() {
@@ -51,6 +53,8 @@ function ManageTweetsPage() {
   const [checkUsernameInput, setCheckUsernameInput] = useState('');
   const watermelonUsernames = verifiedByRadioWaterMelon.data;
   const resolvedUsername = extractUsername(checkUsernameInput);
+  const followings = useAppSelector(followingsSelector);
+
   const normalizedVerifiedSet = new Set(
     Array.from(watermelonUsernames).map(u => u.toLowerCase())
   );
@@ -99,34 +103,34 @@ function ManageTweetsPage() {
   const handleUpdateLikeThreshold = (e: ChangeEvent<HTMLInputElement>) => {
     const minutes = Number(e.target.value);
     if (!isNaN(minutes)) {
-     dispatch(automatedTasksActions.setLikeRtThresholdDuration(minutes * 60000));
+      dispatch(automatedTasksActions.setLikeRtThresholdDuration(minutes * 60000));
     }
   };
 
   const handleUpdateSourceToTargetThreshold = (e: ChangeEvent<HTMLInputElement>) => {
     const minutes = Number(e.target.value);
     if (!isNaN(minutes)) {
-     dispatch(automatedTasksActions.setSourceToTargetThresholdDuration(minutes * 60000));
+      dispatch(automatedTasksActions.setSourceToTargetThresholdDuration(minutes * 60000));
     }
   };
 
   const handleUpdateFollowingThreshold = (e: ChangeEvent<HTMLInputElement>) => {
     const minutes = Number(e.target.value);
     if (!isNaN(minutes)) {
-     dispatch(automatedTasksActions.setFollowingThresholdDuration(minutes * 60000));
+      dispatch(automatedTasksActions.setFollowingThresholdDuration(minutes * 60000));
     }
   };
   const handleUpdateMinWaitFollowing = (e: ChangeEvent<HTMLInputElement>) => {
     const seconds = Number(e.target.value);
     if (!isNaN(seconds)) {
-     dispatch(automatedTasksActions.setMinWaitingTimeForFollowing(seconds * 1000));
+      dispatch(automatedTasksActions.setMinWaitingTimeForFollowing(seconds * 1000));
     }
   };
 
   const handleUpdateMinWaitTweet = (e: ChangeEvent<HTMLInputElement>) => {
     const seconds = Number(e.target.value);
     if (!isNaN(seconds)) {
-     dispatch(automatedTasksActions.setMinWaitingTimeForTweet(seconds * 1000));
+      dispatch(automatedTasksActions.setMinWaitingTimeForTweet(seconds * 1000));
     }
   };
 
@@ -143,6 +147,23 @@ function ManageTweetsPage() {
   const handleResetUserInput = () => {
     dispatch(automatedTasksActions.setUserInput(defaultUserInput));
   };
+
+  const handleMergeVerifiedWithFollowings = () => {
+    const existingUsernames = new Set(followings.map(f => f.username.toLowerCase()));
+    const verifiedToAdd = Array.from(verifiedByRadioWaterMelon.data)
+    .map(u => u.trim())
+    .filter(u => u && !existingUsernames.has(u.toLowerCase()))
+    .map(u => ({
+      username: u,
+      mutual: false,
+      timestamp: 0,
+    }));
+
+    if (verifiedToAdd.length > 0) {
+      dispatch(userActions.addOrUpdateFollowings({followings: verifiedToAdd}));
+    }
+  };
+
 
   return (
     <Box p={2}>
@@ -288,7 +309,7 @@ function ManageTweetsPage() {
           <TextField
             label="Min Wait Time (Following) (seconds)"
             type="number"
-            value={followingWaitTime / 1000 }
+            value={followingWaitTime / 1000}
             onChange={handleUpdateMinWaitFollowing}
             fullWidth
             size="small"
@@ -319,7 +340,8 @@ function ManageTweetsPage() {
         <Typography variant="subtitle1">
           Status: <strong>{replyStatus}</strong>
         </Typography>
-
+      </Box>
+      <Box mt={4} display="flex" alignItems="center" gap={2}>
         <Button
           variant="outlined"
           size="large"
@@ -342,24 +364,34 @@ function ManageTweetsPage() {
           variant="outlined"
           size="large"
           onClick={() => {
-            const sortedUsernames = Array.from(verifiedByRadioWaterMelon.data)
+            const usernames = Array.from(verifiedByRadioWaterMelon.data)
             .map(u => u.trim())
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b));
+            .filter(Boolean);
 
-            const blob = new Blob([sortedUsernames.join('\n')], {type: 'text/plain;charset=utf-8'});
-            const url = URL.createObjectURL(blob);
+            const jsonBlob = new Blob(
+              [JSON.stringify(usernames, null, 2)],
+              {type: 'application/json'}
+            );
+
+            const url = URL.createObjectURL(jsonBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'verifiedUsers.txt';
+            a.download = 'verifiedUsers.json';
             a.click();
             URL.revokeObjectURL(url);
+
           }}
         >
           Export Verified Users
         </Button>
+        <Button
+          variant="outlined"
+          size="large"
+          onClick={handleMergeVerifiedWithFollowings}
+        >
+          Merge Verified Users With Followings
+        </Button>
       </Box>
-
 
       <Box mt={4} display="flex" alignItems="center" gap={2}>
         <TextField
