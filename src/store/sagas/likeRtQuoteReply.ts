@@ -26,12 +26,14 @@ import {
   sourceToTargetThresholdDurationSelector,
   sourceTweetURLsSelector,
   userInputSelector,
-  userStateSelector, verifiedByRadioWaterMelonSelector
+  userStateSelector,
+  verifiedByRadioWaterMelonSelector
 } from "@/store/selectors.ts";
 import type {Following} from "@/utils/following.ts";
 import {REQUEST_LIKE_AND_RT, REQUEST_REPLY_WITH_URL} from "@/utils";
 import {userActions, type UserState} from "@/store/slices/userSlice.ts";
 import {sendMessageToTab, updateTab} from "@/utils/tabs.ts";
+import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
 
 function* getFirstFilteredFollowing() {
   const followings: Following[] = yield select(followingsSelector);
@@ -143,8 +145,13 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
   let following: Following | undefined = yield* getFirstFilteredFollowing();
 
   while (tweetURL || following) {
+    const currentVerified = yield select(verifiedByRadioWaterMelonSelector);
+    yield put(globalAppStateActions.setVerifiedByRadioWaterMelonState({
+      state: "loading",
+      data: currentVerified.data
+    }));
+    yield delay(1000);
     const verifiedRadioWaterMelonUsers = Array.from(((yield select(verifiedByRadioWaterMelonSelector)).data) as Set<string>);
-    yield delay(1000); // always wait at least one second
     const sourceReplies: SourceReplies = yield select(sourceRepliesSelector);
     const likeRtThresholdDuration: number = yield select(likeRtThresholdDurationSelector);
     const sourceToTargetThresholdDuration: number = yield select(sourceToTargetThresholdDurationSelector);

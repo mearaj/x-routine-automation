@@ -163,6 +163,7 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
 async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerResponse, tweet: HTMLElement, isGaza: boolean, sourceReplies: SourceReplies, threshold: number, userInput: ControllerToLikeAndRtInput, verifiedRadioWaterMelonUsers: string[]): Promise<LikeAndRtToControllerResponse> {
   const like = tweet.querySelector("button[data-testid='like']") as HTMLElement | null;
   const retweet = tweet.querySelector("button[data-testid='retweet']") as HTMLElement | null;
+  await wait(500); // sometimes like are missed, hence wait
   if (like) {
     like.click();
     await wait(600);

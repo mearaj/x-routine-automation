@@ -23,8 +23,8 @@ export const extractUsername = (input: string): string | null => {
 export const likeRtThresholdDuration = 1000 * 60 * 60 * 12;
 export const sourceToTargetThresholdDuration = 1000 * 60 * 60 * 12;
 export const followingThresholdDuration = 1000 * 60 * 60 * 12;
-export const minWaitingTimeForFollowing = 1000 * 20;
-export const minWaitingTimeForTweet = 1000 * 20;
+export const minWaitingTimeForFollowing = 1000 * 18;
+export const minWaitingTimeForTweet = 1000 * 18;
 export const defaultUserInput: ControllerToLikeAndRtInput = {
   rtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ",
   rtImageSearchText: "together we will rebuild",
