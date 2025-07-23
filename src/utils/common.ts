@@ -28,10 +28,10 @@ export const minWaitingTimeForTweet = 1000 * 18;
 export const defaultUserInput: ControllerToLikeAndRtInput = {
   rtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ",
   rtImageSearchText: "together we will rebuild",
-  rtImageSearchPosition: 0,
+  rtImageGiphyId: "ZO19BOWoczJ82msvLV",
   quoteText: "👇👇👇👇👇",
   gazaRtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ\n" + "❤️ 💔 🤲 🇵🇸",
   gazaRtImageSearchText: "Save Gaza",
-  gazaRtImageSearchPosition: 0,
+  gazaRtImageGiphyId: "wmNMiRvXRZnJvjMpaV",
   gazaQuoteText: "👇👇👇👇👇",
 }

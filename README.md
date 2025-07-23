@@ -25,6 +25,14 @@ Out of that realization, this extension was born — not only to help myself, bu
 
 ---
 
+## 📺 YouTube Demo
+
+[![Watch the demo](https://img.youtube.com/vi/ykXXujQ3gHU/0.jpg)](https://www.youtube.com/watch?v=ykXXujQ3gHU)  
+👉 [Watch on YouTube](https://www.youtube.com/watch?v=ykXXujQ3gHU)
+
+---
+
+
 ## 💻 Local Development
 
 ### 1. Clone the repository

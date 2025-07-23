@@ -110,6 +110,13 @@ export const getAppStateFromStorage = async (): Promise<{
     (await chrome.storage.local.get([`${activeUsername}:userInput`]))[
       `${activeUsername}:userInput`
       ] ?? defaultUserInput;
+  if (typeof userInput.rtImageGiphyId === "number") {
+    userInput.rtImageGiphyId = defaultUserInput.rtImageGiphyId;
+  }
+  if (typeof userInput.gazaRtImageGiphyId === "number") {
+    userInput.gazaRtImageGiphyId = defaultUserInput.gazaRtImageGiphyId;
+  }
+
 
   return {
     user: {

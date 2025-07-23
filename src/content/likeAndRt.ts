@@ -200,12 +200,12 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
 
   let commentText = userInput.gazaRtText;
   let imageSearchText = userInput.gazaRtImageSearchText;
-  let position = userInput.gazaRtImageSearchPosition;
+  let giphyId = userInput.gazaRtImageGiphyId;
   let quoteText = userInput.gazaQuoteText;
   if (!isGaza) {
     commentText = userInput.rtText;
     imageSearchText = userInput.rtImageSearchText;
-    position = userInput.rtImageSearchPosition;
+    giphyId = userInput.rtImageGiphyId;
     quoteText = userInput.quoteText;
   }
   if (isWaterMelonVerified) {
@@ -285,23 +285,48 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
       await wait(3500);
     }
 
-// Click the first visible GIF
-    const gifButtons = Array.from(modalBox.querySelectorAll('button'))
-    .filter(btn => btn.querySelector('[data-testid="gifSearchGifImage"]')) as HTMLElement[];
+    let shouldClearInput = false;
 
-    const visibleGifButtons = gifButtons.filter(btn => btn.offsetParent !== null);
+    if (giphyId && giphyId.trim() !== '') {
+      const allGifButtons = Array.from(
+        modalBox.querySelectorAll('button')
+      ).filter(btn =>
+        btn.querySelector('[data-testid="gifSearchGifImage"]')
+      ) as HTMLElement[];
 
-    const positionIndex = Math.min(
-      Math.max(position ?? 0, 0), // Ensure position is >= 0
-      visibleGifButtons.length - 1 // Cap it within bounds
-    );
+      const matchingGifBtn = allGifButtons.find(btn => {
+        const img = btn.querySelector('img') as HTMLImageElement | null;
+        if (!img?.src) return false;
 
-    const selectedGifBtn = visibleGifButtons[positionIndex];
-    if (selectedGifBtn) {
-      selectedGifBtn.scrollIntoView({block: 'center'});
-      await wait(300);
-      selectedGifBtn.click();
-      await wait(1500);
+        // Extract Giphy ID using exact segment
+        const match = img.src.match(/\/([a-zA-Z0-9]+)\/[a-z0-9_]+\.(?:gif|webp)$/i);
+        const extractedId = match?.[1];
+        return extractedId === giphyId;
+      });
+
+      if (matchingGifBtn) {
+        matchingGifBtn.scrollIntoView({block: 'center'});
+        await wait(300);
+        matchingGifBtn.click();
+        await wait(1500);
+      } else {
+        console.warn(`⚠️ No GIF matched Giphy ID: ${giphyId}. Clicking clear.`);
+        shouldClearInput = true;
+      }
+    } else {
+      shouldClearInput = true;
+    }
+    if (shouldClearInput) {
+      const clearBtn = modalBox.querySelector('button[data-testid="clearButton"]') as HTMLElement | null;
+      if (clearBtn) {
+        clearBtn.click();
+        await wait(1000);
+        const closeBtn = modalBox.querySelector('button[data-testid="app-bar-close"]') as HTMLElement | null;
+        if (closeBtn) {
+          closeBtn.click();
+          await wait(500);
+        }
+      }
     }
 
 
