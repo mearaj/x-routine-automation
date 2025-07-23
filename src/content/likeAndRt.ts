@@ -1,7 +1,7 @@
 // content/likeAndRt.ts
 import {PING_REQUEST, PONG_RESPONSE, REQUEST_LIKE_AND_RT, RESPONSE_LIKE_AND_RT,} from "../utils/keys";
-import {wait} from "../utils/common.ts";
-import {extractUsernameFromUrl, waitForElement} from "../content/common.ts";
+import {extractUsernameFromUrl, wait} from "../utils/common.ts";
+import {waitForElement} from "../content/common.ts";
 import type {
   ControllerToLikeAndRtInput,
   ControllerToLikeAndRtRequest,
