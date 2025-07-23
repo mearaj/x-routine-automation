@@ -10,6 +10,11 @@ export const matchesStatus = (url: string): boolean => {
 }
 
 
+export function getCurrentUsernameFromUrl(): string | null {
+  const match = window.location.pathname.match(/^\/([a-zA-Z0-9_]+)/);
+  return match ? match[1] : null;
+}
+
 export const extractUsername = (input: string): string | null => {
   input = input.trim();
   if (input.startsWith('@')) return input.slice(1);
@@ -34,4 +39,15 @@ export const defaultUserInput: ControllerToLikeAndRtInput = {
   gazaRtImageSearchText: "Save Gaza",
   gazaRtImageGiphyId: "wmNMiRvXRZnJvjMpaV",
   gazaQuoteText: "👇👇👇👇👇",
+}
+
+export function extractUsernameFromUrl(url: string) {
+  try {
+    const u = new URL(url);
+    const pathSegments = u.pathname.split("/").filter(Boolean);
+    return pathSegments[0] || null;
+  } catch (e) {
+    console.warn("Error extracting username from url", url, e);
+    return null;
+  }
 }
