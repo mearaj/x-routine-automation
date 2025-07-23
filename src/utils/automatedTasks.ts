@@ -54,11 +54,11 @@ export interface FollowingToControllerResponse {
 export interface ControllerToLikeAndRtInput {
   rtText: string;
   rtImageSearchText: string;
-  rtImageSearchPosition: number;
+  rtImageGiphyId: string;
   quoteText: string;
   gazaRtText: string;
   gazaRtImageSearchText: string;
-  gazaRtImageSearchPosition: number;
+  gazaRtImageGiphyId: string;
   gazaQuoteText: string;
 }
 

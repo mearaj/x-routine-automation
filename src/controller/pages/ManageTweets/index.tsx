@@ -438,13 +438,23 @@ function ManageTweetsPage() {
           />
 
           <TextField
-            label="RT Image Search Position"
-            type="number"
-            value={userInput.rtImageSearchPosition}
-            onChange={(e) => handleUpdateUserInput('rtImageSearchPosition', Number(e.target.value))}
+            label="RT Image Giphy ID"
+            type="text"
+            value={userInput.rtImageGiphyId}
+            onChange={(e) => handleUpdateUserInput('rtImageGiphyId', e.target.value)}
             fullWidth
           />
-
+          <Box>
+            <Button
+              size="medium"
+              variant="outlined"
+              onClick={() =>
+                handleUpdateUserInput('rtImageGiphyId', defaultUserInput.rtImageGiphyId)
+              }
+            >
+              Reset RT Image Giphy ID to Default
+            </Button>
+          </Box>
           <TextField
             label="Quote Text"
             multiline
@@ -473,12 +483,23 @@ function ManageTweetsPage() {
           />
 
           <TextField
-            label="Gaza RT Image Search Position"
-            type="number"
-            value={userInput.gazaRtImageSearchPosition}
-            onChange={(e) => handleUpdateUserInput('gazaRtImageSearchPosition', Number(e.target.value))}
+            label="Gaza RT Image Giphy ID"
+            type="text"
+            value={userInput.gazaRtImageGiphyId}
+            onChange={(e) => handleUpdateUserInput('gazaRtImageGiphyId', e.target.value)}
             fullWidth
           />
+          <Box>
+            <Button
+              size="medium"
+              variant="outlined"
+              onClick={() =>
+                handleUpdateUserInput('gazaRtImageGiphyId', defaultUserInput.gazaRtImageGiphyId)
+              }
+            >
+              Reset Gaza RT Image Giphy ID to Default
+            </Button>
+          </Box>
           <TextField
             label="Gaza Quote Text"
             multiline
