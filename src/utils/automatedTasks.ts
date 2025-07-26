@@ -39,7 +39,7 @@ export type SourceToTargetReplies = {
 
 
 export interface ControllerToFollowingRequest {
-  type: typeof REQUEST_START_SCRAPE_FOLLOWINGS |typeof REQUEST_STOP_SCRAPE_FOLLOWINGS
+  type: typeof REQUEST_START_SCRAPE_FOLLOWINGS | typeof REQUEST_STOP_SCRAPE_FOLLOWINGS
   activeUsername: string;
   followings: Following[];
 }
@@ -51,14 +51,18 @@ export interface FollowingToControllerResponse {
   error: string | null | undefined;
 }
 
+export interface RtImage {
+  base64: string;
+  type: string;
+  name: string;
+}
+
 export interface ControllerToLikeAndRtInput {
   rtText: string;
-  rtImageSearchText: string;
-  rtImageGiphyId: string;
+  rtImage: RtImage  | null;
   quoteText: string;
   gazaRtText: string;
-  gazaRtImageSearchText: string;
-  gazaRtImageGiphyId: string;
+  gazaRtImage: RtImage | null;
   gazaQuoteText: string;
 }
 

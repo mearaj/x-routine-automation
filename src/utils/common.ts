@@ -1,4 +1,6 @@
 import type {ControllerToLikeAndRtInput} from "@/utils/automatedTasks.ts";
+import {DEFAULT_RT_IMAGE_BASE64} from "./rtImage.ts";
+import {DEFAULT_GAZA_RT_IMAGE_BASE64} from "./gazaRtImage.ts";
 
 export const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -32,12 +34,18 @@ export const minWaitingTimeForFollowing = 1000 * 18;
 export const minWaitingTimeForTweet = 1000 * 18;
 export const defaultUserInput: ControllerToLikeAndRtInput = {
   rtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ",
-  rtImageSearchText: "together we will rebuild",
-  rtImageGiphyId: "ZO19BOWoczJ82msvLV",
+  rtImage: {
+    base64: DEFAULT_RT_IMAGE_BASE64,
+    type: "image/gif",
+    name: "defaultRtImage.gif"
+  },
   quoteText: "👇👇👇👇👇",
   gazaRtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ\n" + "❤️ 💔 🤲 🇵🇸",
-  gazaRtImageSearchText: "Save Gaza",
-  gazaRtImageGiphyId: "wmNMiRvXRZnJvjMpaV",
+  gazaRtImage: {
+    base64: DEFAULT_GAZA_RT_IMAGE_BASE64,
+    type: "image/gif",
+    name: "defaultGazaRtImage.gif"
+  },
   gazaQuoteText: "👇👇👇👇👇",
 }
 

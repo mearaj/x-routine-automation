@@ -14,7 +14,12 @@ import {ArrowBack, Delete} from '@mui/icons-material';
 import {NavLink} from 'react-router';
 import {useAppDispatch, useAppSelector} from '@/store/store';
 import {type ChangeEvent, useState} from 'react';
-import {AutomatedTaskStatusEnum, type ControllerToLikeAndRtInput, type SourceTweetURL} from "@/utils/automatedTasks.ts";
+import {
+  AutomatedTaskStatusEnum,
+  type ControllerToLikeAndRtInput,
+  type RtImage,
+  type SourceTweetURL
+} from "@/utils/automatedTasks.ts";
 import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
 import {
   activeUsernameSelector,
@@ -162,6 +167,16 @@ function ManageTweetsPage() {
     if (verifiedToAdd.length > 0) {
       dispatch(userActions.addOrUpdateFollowings({followings: verifiedToAdd}));
     }
+  };
+
+  const fileToRtImage = (file: File): Promise<RtImage> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () =>
+        resolve({base64: reader.result as string, type: file.type, name: file.name});
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
 
@@ -429,33 +444,6 @@ function ManageTweetsPage() {
           />
 
           <TextField
-            label="RT Image Search Text"
-            multiline
-            minRows={2}
-            value={userInput.rtImageSearchText}
-            onChange={(e) => handleUpdateUserInput('rtImageSearchText', e.target.value)}
-            fullWidth
-          />
-
-          <TextField
-            label="RT Image Giphy ID"
-            type="text"
-            value={userInput.rtImageGiphyId}
-            onChange={(e) => handleUpdateUserInput('rtImageGiphyId', e.target.value)}
-            fullWidth
-          />
-          <Box>
-            <Button
-              size="medium"
-              variant="outlined"
-              onClick={() =>
-                handleUpdateUserInput('rtImageGiphyId', defaultUserInput.rtImageGiphyId)
-              }
-            >
-              Reset RT Image Giphy ID to Default
-            </Button>
-          </Box>
-          <TextField
             label="Quote Text"
             multiline
             minRows={3}
@@ -463,6 +451,57 @@ function ManageTweetsPage() {
             onChange={(e) => handleUpdateUserInput('quoteText', e.target.value)}
             fullWidth
           />
+
+          {userInput.rtImage ? (
+            <Box>
+              <Box display="flex" gap={2} alignItems="center">
+                <img
+                  src={userInput.rtImage.base64}
+                  alt="RT"
+                  style={{maxHeight: 100, borderRadius: 4, border: '1px solid #ccc'}}
+                />
+                <Box display="flex" gap={1}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => handleUpdateUserInput('rtImage', null)}
+                  >
+                    Remove
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() =>
+                      handleUpdateUserInput('rtImage', {
+                        base64: defaultUserInput.rtImage!.base64,
+                        name: defaultUserInput.rtImage!.name,
+                        type: defaultUserInput.rtImage!.type,
+                      })
+                    }
+                  >
+                    Reset to Default
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+          ) : (
+            <Button variant="outlined" component="label">
+              Upload RT Image
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={async (e) => {
+                  const input = e.target as HTMLInputElement;
+                  const file = input.files?.[0];
+                  if (file) {
+                    const image = await fileToRtImage(file);
+                    console.log('📤 Uploaded RT image:', image);
+                    handleUpdateUserInput('rtImage', image);
+                  }
+                }}
+              />
+            </Button>
+          )}
 
           <TextField
             label="Gaza RT Text"
@@ -474,33 +513,6 @@ function ManageTweetsPage() {
           />
 
           <TextField
-            label="Gaza RT Image Search Text"
-            multiline
-            minRows={2}
-            value={userInput.gazaRtImageSearchText}
-            onChange={(e) => handleUpdateUserInput('gazaRtImageSearchText', e.target.value)}
-            fullWidth
-          />
-
-          <TextField
-            label="Gaza RT Image Giphy ID"
-            type="text"
-            value={userInput.gazaRtImageGiphyId}
-            onChange={(e) => handleUpdateUserInput('gazaRtImageGiphyId', e.target.value)}
-            fullWidth
-          />
-          <Box>
-            <Button
-              size="medium"
-              variant="outlined"
-              onClick={() =>
-                handleUpdateUserInput('gazaRtImageGiphyId', defaultUserInput.gazaRtImageGiphyId)
-              }
-            >
-              Reset Gaza RT Image Giphy ID to Default
-            </Button>
-          </Box>
-          <TextField
             label="Gaza Quote Text"
             multiline
             minRows={3}
@@ -508,8 +520,61 @@ function ManageTweetsPage() {
             onChange={(e) => handleUpdateUserInput('gazaQuoteText', e.target.value)}
             fullWidth
           />
+
+          {userInput.gazaRtImage ? (
+            <Box>
+              <Box display="flex" gap={2} alignItems="center">
+                <img
+                  src={userInput.gazaRtImage.base64}
+                  alt="Gaza RT"
+                  style={{maxHeight: 100, borderRadius: 4, border: '1px solid #ccc'}}
+                />
+                <Box display="flex" gap={1}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => handleUpdateUserInput('gazaRtImage', null)}
+                  >
+                    Remove
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() =>
+                      handleUpdateUserInput('gazaRtImage', {
+                        base64: defaultUserInput.gazaRtImage!.base64,
+                        name: defaultUserInput.gazaRtImage!.name,
+                        type: defaultUserInput.gazaRtImage!.type,
+                      })
+                    }
+                  >
+                    Reset to Default
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+          ) : (
+            <Button variant="outlined" component="label">
+              Upload Gaza RT Image
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={async (e) => {
+                  const input = e.target as HTMLInputElement;
+                  const file = input.files?.[0];
+                  if (file) {
+                    const image = await fileToRtImage(file);
+                    console.log('📤 Uploaded Gaza RT image:', image);
+                    handleUpdateUserInput('gazaRtImage', image);
+                  }
+                }}
+              />
+            </Button>
+          )}
         </Box>
       </Box>
+
+
     </Box>
   );
 }

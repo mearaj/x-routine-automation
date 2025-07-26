@@ -199,13 +199,9 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   isGaza = isGaza || isWaterMelonVerified;
 
   let commentText = userInput.gazaRtText;
-  let imageSearchText = userInput.gazaRtImageSearchText;
-  let giphyId = userInput.gazaRtImageGiphyId;
   let quoteText = userInput.gazaQuoteText;
   if (!isGaza) {
     commentText = userInput.rtText;
-    imageSearchText = userInput.rtImageSearchText;
-    giphyId = userInput.rtImageGiphyId;
     quoteText = userInput.quoteText;
   }
   if (isWaterMelonVerified) {
@@ -269,66 +265,31 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     replyBox.dispatchEvent(pasteEvent);
 
     await wait(1500);
+    const imageToInsert = isGaza ? userInput.gazaRtImage : userInput.rtImage;
+    console.log("imageToInsert", imageToInsert);
 
-    const gifBtn = modalBox.querySelector('button[data-testid="gifSearchButton"]') as HTMLElement | null;
-    if (gifBtn) {
-      gifBtn.click();
-      await wait(2000);
-    }
+    if (imageToInsert && typeof imageToInsert === 'object' && imageToInsert.base64?.startsWith('data:image/')) {
+      try {
+        const blob = await (await fetch(imageToInsert.base64)).blob();
+        const file = new File([blob], imageToInsert.name, {type: imageToInsert.type});
 
-    const gifInput = modalBox.querySelector('input[data-testid="gifSearchSearchInput"]') as HTMLInputElement | null;
-    if (gifInput) {
-      gifInput.focus();
-      gifInput.setRangeText('', 0, gifInput.value.length, 'end');
-      gifInput.setRangeText(imageSearchText, 0, 0, 'end');
-      gifInput.dispatchEvent(new InputEvent('input', {bubbles: true}));
-      await wait(3500);
-    }
+        const dt = new DataTransfer();
+        dt.items.add(file);
 
-    let shouldClearInput = false;
-
-    if (giphyId && giphyId.trim() !== '') {
-      const allGifButtons = Array.from(
-        modalBox.querySelectorAll('button')
-      ).filter(btn =>
-        btn.querySelector('[data-testid="gifSearchGifImage"]')
-      ) as HTMLElement[];
-
-      const matchingGifBtn = allGifButtons.find(btn => {
-        const img = btn.querySelector('img') as HTMLImageElement | null;
-        if (!img?.src) return false;
-
-        // Extract Giphy ID using exact segment
-        const match = img.src.match(/\/([a-zA-Z0-9]+)\/[a-z0-9_]+\.(?:gif|webp)$/i);
-        const extractedId = match?.[1];
-        return extractedId === giphyId;
-      });
-
-      if (matchingGifBtn) {
-        matchingGifBtn.scrollIntoView({block: 'center'});
-        await wait(300);
-        matchingGifBtn.click();
-        await wait(1500);
-      } else {
-        console.warn(`⚠️ No GIF matched Giphy ID: ${giphyId}. Clicking clear.`);
-        shouldClearInput = true;
-      }
-    } else {
-      shouldClearInput = true;
-    }
-    if (shouldClearInput) {
-      const clearBtn = modalBox.querySelector('button[data-testid="clearButton"]') as HTMLElement | null;
-      if (clearBtn) {
-        clearBtn.click();
-        await wait(1000);
-        const closeBtn = modalBox.querySelector('button[data-testid="app-bar-close"]') as HTMLElement | null;
-        if (closeBtn) {
-          closeBtn.click();
-          await wait(500);
+        const fileInput = modalBox.querySelector('input[type="file"][accept*="image"]') as HTMLInputElement | null;
+        if (fileInput) {
+          fileInput.files = dt.files;
+          fileInput.dispatchEvent(new Event('input', {bubbles: true}));
+          fileInput.dispatchEvent(new Event('change', {bubbles: true}));
+          await wait(2500);
+          console.log("✅ Image injected.");
+        } else {
+          console.warn("❌ File input not found.");
         }
+      } catch (e) {
+        console.error("⚠️ Failed to inject image:", e);
       }
     }
-
 
     const postReplyBtn = modalBox.querySelector('button[data-testid="tweetButton"]:not([disabled])') as HTMLElement | null;
     if (postReplyBtn) {
