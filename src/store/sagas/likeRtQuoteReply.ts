@@ -292,6 +292,7 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
         }
       }
     }
+    yield delay(250); // sometimes ui closes despite tweeURLs hence for debugging it
     tweetURL = yield* getFirstFoundTweetURL();
     following = yield* getFirstFilteredFollowing();
   }
