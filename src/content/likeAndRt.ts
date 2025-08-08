@@ -131,7 +131,9 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
       descriptionText.toLowerCase().includes(lowercaseUrl) ||
       tweetText.toLowerCase().includes(lowercaseUrl) ||
       tweetUrl.toLowerCase().includes(lowercaseUrl) ||
-      userUrlText.toLowerCase().includes(lowercaseUrl));
+      userUrlText.toLowerCase().includes(lowercaseUrl) ||
+      location.href.toLowerCase().startsWith(url.toLowerCase())
+    );
   })
   if (!excluded) {
     matched = urlsToMatch.some(url => {
