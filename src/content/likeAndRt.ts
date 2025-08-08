@@ -90,12 +90,19 @@ async function likeAndRtProcessor(message: ControllerToLikeAndRtRequest, sendRes
     sendResponse(response);
     return;
   }
+  console.log("isFundraiser", isFundraiser);
+  console.log("tweet", tweet);
+  console.log("tweetUrl", tweetUrl);
+  console.log("isGaza", isGaza);
   const isReallyGaza = isGaza || !!message.isGaza;
+  console.log("isReallyGaza", isReallyGaza);
+  console.log("message", message);
   try {
     response.url = tweetUrl;
     response = await likeAndRtPinnedPostOnProfile(response, tweet, isReallyGaza, message.sourceReplies, message.threshold, message.userInput, message.verifiedRadioWaterMelonUsers);
+    console.log("response", response);
   } catch (e) {
-    console.error(e)
+    console.error(e);
   }
   sendResponse(response);
 }
@@ -108,8 +115,8 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
   isGaza: boolean,
 } {
   const tweet = document.querySelector("article[data-testid='tweet']") as HTMLElement | null;
-  const tweetLink = tweet?.querySelector("a[href*='/status/']") as HTMLAnchorElement | null;
-  const tweetUrl = tweetLink?.href?.match(/^https:\/\/x\.com\/[^/]+\/status\/\d+/)?.[0] ?? "";
+  const tweetLink = tweet?.querySelector("a[role='link'][href*='/status/']:has(time)") as HTMLAnchorElement | null;
+const tweetUrl = tweetLink?.href?.match(/^https:\/\/x\.com\/[^/]+\/status\/\d+/)?.[0] ?? "";
 
 
   // If no tweet or tweet URL is found, no point continuing
@@ -191,7 +198,6 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     }
   }
   response.timestamp = Date.now();
-
   const usernameExtracted = extractUsernameFromUrl(response.url);
   console.log("usernameExtracted", usernameExtracted);
   let isWaterMelonVerified = false;
