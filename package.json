@@ -1,7 +1,7 @@
 {
   "name": "my-x-extension",
   "private": true,
-  "version": "1.0.16",
+  "version": "1.0.17",
   "type": "module",
   "scripts": {
     "package": "npm run clean && npm run build:zip",

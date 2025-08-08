@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "X-Routine-Automation",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Automates liking, retweeting, and quoting pinned posts from followings on X (Twitter).",
   "icons": {
     "16": "icons/icon16.png",
