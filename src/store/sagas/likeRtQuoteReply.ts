@@ -37,12 +37,25 @@ import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
 
 function* getFirstFilteredFollowing() {
   const followings: Following[] = yield select(followingsSelector);
-  const threshold = yield select(followingThresholdDurationSelector);
-  return followings.find((f) => {
-    const timeDifference = Date.now() - f.timestamp;
-    return timeDifference > threshold;
-  });
+  const threshold: number = yield select(followingThresholdDurationSelector);
+  const { data }: { data: Set<string> } = yield select(verifiedByRadioWaterMelonSelector);
+  const normalize = (u: string) => u.replace(/^@/, "").toLowerCase();
+  const verified = new Set(Array.from(data ?? new Set<string>()).map(normalize));
+  const now = Date.now();
+  for (const f of followings) {
+    if ((now - f.timestamp) > threshold && verified.has(normalize(f.username))) {
+      return f;
+    }
+  }
+  for (const f of followings) {
+    if ((now - f.timestamp) > threshold) {
+      return f;
+    }
+  }
+  return undefined;
 }
+
+
 
 function* getFirstFoundTweetURL() {
   const tweetURLs: SourceTweetURL[] = yield select(sourceTweetURLsSelector);
