@@ -83,7 +83,7 @@ async function likeAndRtProcessor(message: ControllerToLikeAndRtRequest, sendRes
     tweet,
     tweetUrl,
     isGaza
-  } = getMatchingFundraiserUrl(message.fundraiserURLs, message.fundraiserExcludedURLs);
+  } = getMatchingFundraiserUrl(message.fundraiserURLs, message.fundraiserExcludedURLs, message.verifiedRadioWaterMelonUsers);
   if (!tweet || !tweetUrl || (!isFundraiser && !message.isFundraiser)) {
     response.timestamp = Date.now();
     response.error = "Tweets not found";
@@ -108,7 +108,7 @@ async function likeAndRtProcessor(message: ControllerToLikeAndRtRequest, sendRes
 }
 
 
-function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]): {
+function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[], verifiedRadioWaterMelonUsers: string[]): {
   tweetUrl: string,
   tweet: HTMLElement | null,
   isFundraiser: boolean,
@@ -116,7 +116,7 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
 } {
   const tweet = document.querySelector("article[data-testid='tweet']") as HTMLElement | null;
   const tweetLink = tweet?.querySelector("a[role='link'][href*='/status/']:has(time)") as HTMLAnchorElement | null;
-const tweetUrl = tweetLink?.href?.match(/^https:\/\/x\.com\/[^/]+\/status\/\d+/)?.[0] ?? "";
+  const tweetUrl = tweetLink?.href?.match(/^https:\/\/x\.com\/[^/]+\/status\/\d+/)?.[0] ?? "";
 
 
   // If no tweet or tweet URL is found, no point continuing
@@ -130,6 +130,9 @@ const tweetUrl = tweetLink?.href?.match(/^https:\/\/x\.com\/[^/]+\/status\/\d+/)
 
   const donateRegex = /donat(e|ion)/i;
   const gazaTestRegex = /gaza|palestine|🇵🇸/i;
+  const verifiedSet = new Set(verifiedRadioWaterMelonUsers.map(u => u.toLowerCase()));
+  const usernameFromTweet = extractUsernameFromUrl(tweetUrl)?.toLowerCase() ?? "";
+  const isVerifiedRM = usernameFromTweet !== "" && verifiedSet.has(usernameFromTweet);
 
   let matched = false;
   const excluded = urlsToExclude.some((url) => {
@@ -165,8 +168,8 @@ const tweetUrl = tweetLink?.href?.match(/^https:\/\/x\.com\/[^/]+\/status\/\d+/)
     gazaTestRegex.test(userUrlText) ||
     gazaTestRegex.test(userName)
 
-
-  return {tweetUrl: tweetUrl, tweet: tweet, isFundraiser: matched, isGaza: isGaza};
+  const isFundraiser = matched || isVerifiedRM;
+  return {tweetUrl: tweetUrl, tweet: tweet, isFundraiser, isGaza: isGaza};
 }
 
 async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerResponse, tweet: HTMLElement, isGaza: boolean, sourceReplies: SourceReplies, threshold: number, userInput: ControllerToLikeAndRtInput, verifiedRadioWaterMelonUsers: string[]): Promise<LikeAndRtToControllerResponse> {
