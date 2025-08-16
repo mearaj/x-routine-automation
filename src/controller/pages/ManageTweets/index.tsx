@@ -61,7 +61,7 @@ function ManageTweetsPage() {
   const followings = useAppSelector(followingsSelector);
 
   const normalizedVerifiedSet = new Set(
-    Array.from(watermelonUsernames).map(u => u.toLowerCase())
+    Array.from(watermelonUsernames).map(u => u[0].toLowerCase())
   );
   const isVerified = resolvedUsername
     ? normalizedVerifiedSet.has(resolvedUsername.toLowerCase())
@@ -156,7 +156,7 @@ function ManageTweetsPage() {
   const handleMergeVerifiedWithFollowings = () => {
     const existingUsernames = new Set(followings.map(f => f.username.toLowerCase()));
     const verifiedToAdd = Array.from(verifiedByRadioWaterMelon.data)
-    .map(u => u.trim())
+    .map(u => u[0].trim())
     .filter(u => u && !existingUsernames.has(u.toLowerCase()))
     .map(u => ({
       username: u,
@@ -379,8 +379,8 @@ function ManageTweetsPage() {
           variant="outlined"
           size="large"
           onClick={() => {
-            const usernames = Array.from(verifiedByRadioWaterMelon.data)
-            .map(u => u.trim())
+            const usernames = Array.from(verifiedByRadioWaterMelon.data.keys())
+            .map(u => u[0].trim())
             .filter(Boolean);
 
             const jsonBlob = new Blob(

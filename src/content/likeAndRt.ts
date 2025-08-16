@@ -1,6 +1,6 @@
 // content/likeAndRt.ts
 import {PING_REQUEST, PONG_RESPONSE, REQUEST_LIKE_AND_RT, RESPONSE_LIKE_AND_RT,} from "../utils/keys";
-import {extractUsernameFromUrl, wait} from "../utils/common.ts";
+import {extractUsernameFromXUrl, wait} from "../utils/common.ts";
 import {waitForElement} from "../content/common.ts";
 import type {
   ControllerToLikeAndRtInput,
@@ -99,7 +99,7 @@ async function likeAndRtProcessor(message: ControllerToLikeAndRtRequest, sendRes
   console.log("message", message);
   try {
     response.url = tweetUrl;
-    response = await likeAndRtPinnedPostOnProfile(response, tweet, isReallyGaza, message.sourceReplies, message.threshold, message.userInput, message.verifiedRadioWaterMelonUsers);
+    response = await likeAndRtPinnedPostOnProfile(response, tweet, isReallyGaza, message.sourceReplies, message.threshold, message.userInput, message.verifiedRadioWaterMelonUsers, message.rwScreenshot);
     console.log("response", response);
   } catch (e) {
     console.error(e);
@@ -131,7 +131,7 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
   const donateRegex = /donat(e|ion)/i;
   const gazaTestRegex = /gaza|palestine|🇵🇸/i;
   const verifiedSet = new Set(verifiedRadioWaterMelonUsers.map(u => u.toLowerCase()));
-  const usernameFromTweet = extractUsernameFromUrl(tweetUrl)?.toLowerCase() ?? "";
+  const usernameFromTweet = extractUsernameFromXUrl(tweetUrl)?.toLowerCase() ?? "";
   const isVerifiedRM = usernameFromTweet !== "" && verifiedSet.has(usernameFromTweet);
 
   let matched = false;
@@ -172,7 +172,7 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
   return {tweetUrl: tweetUrl, tweet: tweet, isFundraiser, isGaza: isGaza};
 }
 
-async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerResponse, tweet: HTMLElement, isGaza: boolean, sourceReplies: SourceReplies, threshold: number, userInput: ControllerToLikeAndRtInput, verifiedRadioWaterMelonUsers: string[]): Promise<LikeAndRtToControllerResponse> {
+async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerResponse, tweet: HTMLElement, isGaza: boolean, sourceReplies: SourceReplies, threshold: number, userInput: ControllerToLikeAndRtInput, verifiedRadioWaterMelonUsers: string[], rwScreenshot?: string): Promise<LikeAndRtToControllerResponse> {
   const like = tweet.querySelector("button[data-testid='like']") as HTMLElement | null;
   const retweet = tweet.querySelector("button[data-testid='retweet']") as HTMLElement | null;
   await wait(500); // sometimes like are missed, hence wait
@@ -201,7 +201,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     }
   }
   response.timestamp = Date.now();
-  const usernameExtracted = extractUsernameFromUrl(response.url);
+  const usernameExtracted = extractUsernameFromXUrl(response.url);
   console.log("usernameExtracted", usernameExtracted);
   let isWaterMelonVerified = false;
   if (usernameExtracted) {
@@ -353,6 +353,54 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     cancelable: true
   });
   editor.dispatchEvent(pasteEvent);
+  console.log("rwScreenshot received inside content ", rwScreenshot);
+  // QUOTE: attach RW screenshot if verified
+  if (isWaterMelonVerified && rwScreenshot && rwScreenshot.startsWith('data:image/')) {
+    try {
+      if (usernameExtracted) {
+        const handleForUrl = usernameExtracted.startsWith('@') ? usernameExtracted : `@${usernameExtracted}`;
+        const rwLink = quoteText + `\nhttps://radiowatermelon.com/tools/verified-accounts?filterAB=${handleForUrl}`
+
+        const dtLink = new DataTransfer();
+        dtLink.setData('text/plain', `\n${rwLink}`);
+        const pasteLinkEvt = new ClipboardEvent('paste', {
+          clipboardData: dtLink,
+          bubbles: true,
+          cancelable: true
+        });
+        editor.dispatchEvent(pasteLinkEvt);
+        await wait(300);
+      }
+      const blob = await (await fetch(rwScreenshot)).blob();
+      const file = new File([blob], 'rw-certificate.png', {type: blob.type || 'image/png'});
+      const dt = new DataTransfer();
+      dt.items.add(file);
+
+      // Scope strictly to the QUOTE composer modal (same pattern as reply)
+      // 1st try the headered modal, then the sheet dialog fallback.
+      const quoteModal =
+        (document.querySelector('div[aria-labelledby="modal-header"][aria-modal="true"][role="dialog"]') as HTMLElement | null)
+        || (document.querySelector('div[data-testid="sheetDialog"]') as HTMLElement | null);
+
+      const fileInput =
+        (quoteModal?.querySelector('input[type="file"][accept*="image"]') as HTMLInputElement | null) ||
+        (quoteModal?.querySelector('input[data-testid="fileInput"]') as HTMLInputElement | null) ||
+        null;
+
+      if (fileInput) {
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('input', {bubbles: true}));
+        fileInput.dispatchEvent(new Event('change', {bubbles: true}));
+        await wait(2500); // let preview render
+        console.log('✅ RW screenshot injected into QUOTE.');
+      } else {
+        console.warn('❌ Quote composer file input not found.');
+      }
+    } catch (e) {
+      console.error('⚠️ Failed to inject RW screenshot into QUOTE:', e);
+    }
+  }
+
 
   // Wait for text to register and button to enable
   await wait(2500);

@@ -7,7 +7,7 @@ function GlobalProvider({children}: Readonly<{ children: ReactNode }>) {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(globalAppStateActions.setVerifiedByRadioWaterMelonState({data: new Set(), state: "loading"}));
+    dispatch(globalAppStateActions.setVerifiedByRadioWaterMelonState({data: new Set<string>(), state: "loading"}));
   }, [dispatch]);
 
   useEffect(() => {

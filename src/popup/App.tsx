@@ -2,7 +2,7 @@ import { Box, Button, TextField, Typography, CircularProgress } from '@mui/mater
 import { useEffect, useState } from 'react';
 import { openOrFocusControllerTab } from "@/utils/tabs.ts";
 import { fetchVerifiedByRadioWaterMelonUsers } from "@/utils/globalState";
-import { extractUsername, extractUsernameFromUrl } from "@/utils/common.ts";
+import { extractUsername, extractUsernameFromXUrl } from "@/utils/common.ts";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,7 @@ function App() {
       try {
         chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
           const url = tabs?.[0]?.url || "";
-          const username = extractUsernameFromUrl(url);
+          const username = extractUsernameFromXUrl(url);
           setCurrentUsername(username);
 
           const set = await fetchVerifiedByRadioWaterMelonUsers();

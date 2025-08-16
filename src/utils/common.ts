@@ -11,6 +11,7 @@ export const matchesStatus = (url: string): boolean => {
   return /^https:\/\/x\.com\/[^/]+\/status\/\d+\/?$/.test(url);
 }
 
+export const RW_VIEW_URL = "https://view-awesome-table.com/-OU0D03DRAjPaOypjQCa/view";
 
 export function getCurrentUsernameFromUrl(): string | null {
   const match = window.location.pathname.match(/^\/([a-zA-Z0-9_]+)/);
@@ -18,13 +19,17 @@ export function getCurrentUsernameFromUrl(): string | null {
 }
 
 export const extractUsername = (input: string): string | null => {
-  input = input.trim();
-  if (input.startsWith('@')) return input.slice(1);
-  if (/^[a-zA-Z0-9_]{1,15}$/.test(input)) return input;
-  const urlMatch = input.match(/^https?:\/\/(?:www\.)?(x|twitter)\.com\/([a-zA-Z0-9_]{1,15})(\/|$)/);
-  if (urlMatch) return urlMatch[2];
+  const s = input.trim();
+  // If it starts with @, validate strictly
+  const mAt = s.match(/^@([A-Za-z0-9_]{1,15})$/);
+  if (mAt) return mAt[1].toLowerCase();
 
-  return null;
+  // Plain handle
+  if (/^[A-Za-z0-9_]{1,15}$/.test(s)) return s.toLowerCase();
+
+  // URL form
+  const mUrl = s.match(/^https?:\/\/(?:www\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})(?:\/|$)/i);
+  return mUrl ? mUrl[1].toLowerCase() : null;
 };
 
 export const likeRtThresholdDuration = 1000 * 60 * 60 * 12;
@@ -39,7 +44,7 @@ export const defaultUserInput: ControllerToLikeAndRtInput = {
     type: "image/gif",
     name: "defaultRtImage.gif"
   },
-  quoteText: "👇👇👇👇👇",
+  quoteText: "",
   gazaRtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ\n" + "❤️ 💔 🤲 🇵🇸",
   gazaRtImage: {
     base64: DEFAULT_GAZA_RT_IMAGE_BASE64,
@@ -49,7 +54,7 @@ export const defaultUserInput: ControllerToLikeAndRtInput = {
   gazaQuoteText: "👇👇👇👇👇",
 }
 
-export function extractUsernameFromUrl(url: string) {
+export function extractUsernameFromXUrl(url: string) {
   try {
     const u = new URL(url);
     const pathSegments = u.pathname.split("/").filter(Boolean);
