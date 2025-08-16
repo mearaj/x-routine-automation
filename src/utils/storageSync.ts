@@ -26,6 +26,8 @@ export const saveAppStateToStorage = async (appState: RootState): Promise<void> 
     await chrome.storage.local.set({[`${userState.activeUsername}:sourceToTargetThresholdDuration`]: automatedTasksState.sourceToTargetThresholdDuration});
     await chrome.storage.local.set({[`${userState.activeUsername}:followingThresholdDuration`]: automatedTasksState.followingThresholdDuration});
     await chrome.storage.local.set({[`${userState.activeUsername}:userInput`]: automatedTasksState.userInput});
+    await chrome.storage.local.set({[`${userState.activeUsername}:minWaitingTimeForFollowing`]: automatedTasksState.minWaitingTimeForFollowing});
+    await chrome.storage.local.set({[`${userState.activeUsername}:minWaitingTimeForTweet`]: automatedTasksState.minWaitingTimeForTweet});
   }
 }
 
@@ -106,6 +108,16 @@ export const getAppStateFromStorage = async (): Promise<{
       `${activeUsername}:followingThresholdDuration`
       ] ?? commonFollowingThresholdDuration;
 
+  const derivedMinWaitingTimeForFollowing =
+    (await chrome.storage.local.get([`${activeUsername}:minWaitingTimeForFollowing`]))[
+      `${activeUsername}:minWaitingTimeForFollowing`
+      ] ?? minWaitingTimeForFollowing;
+
+  const derivedMinWaitingTimeForTweet =
+    (await chrome.storage.local.get([`${activeUsername}:minWaitingTimeForTweet`]))[
+      `${activeUsername}:minWaitingTimeForTweet`
+      ] ?? minWaitingTimeForTweet;
+
   const userInput =
     (await chrome.storage.local.get([`${activeUsername}:userInput`]))[
       `${activeUsername}:userInput`
@@ -137,8 +149,8 @@ export const getAppStateFromStorage = async (): Promise<{
       likeRtQuoteReplyStatus: AutomatedTaskStatusEnum.Idle,
       sourceTweetURLs: [],
       targetTweetURLs: [],
-      minWaitingTimeForFollowing,
-      minWaitingTimeForTweet,
+      minWaitingTimeForFollowing: derivedMinWaitingTimeForFollowing,
+      minWaitingTimeForTweet: derivedMinWaitingTimeForTweet,
       userInput,
       verifiedByRadioWaterMelonState: {
         data: new Set<string>(),

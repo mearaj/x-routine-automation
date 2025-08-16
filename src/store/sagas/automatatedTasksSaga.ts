@@ -15,4 +15,6 @@ export function* watchAutomatedTasksSaga(): Generator {
   yield takeEvery(automatedTasksActions.setSourceToTargetThresholdDuration.type, handleAppStateChange);
   yield takeEvery(automatedTasksActions.setUserInput.type, handleAppStateChange);
   yield takeEvery(automatedTasksActions.removeSourceReplies.type, handleAppStateChange);
+  yield takeEvery(automatedTasksActions.setMinWaitingTimeForFollowing.type, handleAppStateChange);
+  yield takeEvery(automatedTasksActions.setMinWaitingTimeForTweet.type, handleAppStateChange);
 }

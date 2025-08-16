@@ -1,8 +1,8 @@
 import {
-  REQUEST_LIKE_AND_RT,
+  REQUEST_LIKE_AND_RT, REQUEST_RADIO_WATER_MELON_SCREENSHOT,
   REQUEST_REPLY_WITH_URL,
   REQUEST_START_SCRAPE_FOLLOWINGS, REQUEST_STOP_SCRAPE_FOLLOWINGS,
-  RESPONSE_LIKE_AND_RT,
+  RESPONSE_LIKE_AND_RT, RESPONSE_RADIO_WATER_MELON_SCREENSHOT,
   RESPONSE_REPLY_WITH_URL,
   RESPONSE_START_SCRAPE_FOLLOWINGS
 } from "@/utils/keys.ts";
@@ -78,6 +78,7 @@ export interface ControllerToLikeAndRtRequest {
   isGaza?: boolean;
   userInput: ControllerToLikeAndRtInput;
   verifiedRadioWaterMelonUsers: string[];
+  rwScreenshot?: string;
 }
 
 export interface LikeAndRtToControllerResponse {
@@ -99,6 +100,15 @@ export interface ReplyWithURLToControllerResponse {
   sourceURL: string,
   targetURL: string,
   timestamp: number;
+}
+
+export interface ControllerToRwScreenshotRequest {
+  type: typeof REQUEST_RADIO_WATER_MELON_SCREENSHOT;
+  url: string;
+}
+export interface RwScreenshotToControllerResponse {
+  type: typeof RESPONSE_RADIO_WATER_MELON_SCREENSHOT;
+  screenshot?: string;
 }
 
 export interface SourceTweetURL {

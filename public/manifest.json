@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "X-Routine-Automation",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "Automates liking, retweeting, and quoting pinned posts from followings on X (Twitter).",
   "icons": {
     "16": "icons/icon16.png",
@@ -34,7 +34,9 @@
   "content_scripts": [
     {
       "matches": [
-        "https://x.com/*"
+        "https://x.com/*",
+        "https://view-awesome-table.com/*",
+        "https://radiowatermelon.com/*"
       ],
       "js": [
         "content.js"
@@ -47,10 +49,14 @@
     "webNavigation",
     "scripting",
     "storage",
-    "contextMenus"
+    "contextMenus",
+    "activeTab"
   ],
   "host_permissions": [
+    "<all_urls>",
     "https://x.com/*",
-    "https://docs.google.com/*"
+    "https://docs.google.com/*",
+    "https://view-awesome-table.com/*",
+    "https://radiowatermelon.com/*"
   ]
 }

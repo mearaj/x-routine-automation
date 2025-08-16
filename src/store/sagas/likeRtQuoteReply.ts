@@ -1,3 +1,5 @@
+// store/sagas/likeRtQuoteReply.ts
+
 import type {PayloadAction} from "@reduxjs/toolkit";
 import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
 import {
@@ -5,8 +7,10 @@ import {
   AutomatedTaskStatusEnum,
   type ControllerToLikeAndRtRequest,
   type ControllerToReplyWithURLRequest,
+  type ControllerToRwScreenshotRequest,
   type LikeAndRtToControllerResponse,
   type ReplyWithURLToControllerResponse,
+  type RwScreenshotToControllerResponse,
   type SourceReplies,
   type SourceToTargetKey,
   type SourceToTargetReplies,
@@ -30,17 +34,18 @@ import {
   verifiedByRadioWaterMelonSelector
 } from "@/store/selectors.ts";
 import type {Following} from "@/utils/following.ts";
-import {REQUEST_LIKE_AND_RT, REQUEST_REPLY_WITH_URL} from "@/utils";
+import {REQUEST_LIKE_AND_RT, REQUEST_RADIO_WATER_MELON_SCREENSHOT, REQUEST_REPLY_WITH_URL} from "@/utils";
 import {userActions, type UserState} from "@/store/slices/userSlice.ts";
 import {sendMessageToTab, updateTab} from "@/utils/tabs.ts";
 import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
+import {extractUsernameFromXUrl, RW_VIEW_URL, wait} from "@/utils/common.ts";
 
 function* getFirstFilteredFollowing() {
   const followings: Following[] = yield select(followingsSelector);
   const threshold: number = yield select(followingThresholdDurationSelector);
-  const { data }: { data: Set<string> } = yield select(verifiedByRadioWaterMelonSelector);
   const normalize = (u: string) => u.replace(/^@/, "").toLowerCase();
-  const verified = new Set(Array.from(data ?? new Set<string>()).map(normalize));
+  const {data}: { data: Set<string> } = yield select(verifiedByRadioWaterMelonSelector);
+  const verified: Set<string> = new Set(Array.from(data).map(u => u.replace(/^@/, "").toLowerCase()));
   const now = Date.now();
   for (const f of followings) {
     if ((now - f.timestamp) > threshold && verified.has(normalize(f.username))) {
@@ -54,7 +59,6 @@ function* getFirstFilteredFollowing() {
   }
   return undefined;
 }
-
 
 
 function* getFirstFoundTweetURL() {
@@ -115,6 +119,55 @@ function* propagateReplies(
 }
 
 
+function buildRwUrlForUser(username: string, verifiedSet: Set<string>): string | null {
+  const key = username.replace(/^@/, "").toLowerCase();
+  if (!verifiedSet.has(key)) return null;
+  const u = new URL(RW_VIEW_URL);
+  u.searchParams.set("filterAB", `@${key}`);
+  return u.toString();
+}
+
+async function getRwScreenshot(rwUrl: string): Promise<string> {
+  const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const idx = (active?.index ?? 0) + 1;
+
+  const rwTab = await chrome.tabs.create({
+    url: rwUrl,
+    active: false,
+    index: idx,
+    openerTabId: active?.id,
+  });
+  const rwTabId = rwTab.id ?? null;
+  if (rwTabId == null) return "";
+
+  await wait(6000);
+
+  let dataUrl = "";
+  try {
+    await chrome.tabs.update(rwTabId, { active: true });
+    await wait(200);
+
+    const req: ControllerToRwScreenshotRequest = {
+      type: REQUEST_RADIO_WATER_MELON_SCREENSHOT,
+      url: rwUrl,
+    };
+    const resp = (await sendMessageToTab(rwTabId, req)) as RwScreenshotToControllerResponse;
+    dataUrl = resp?.screenshot || "";
+  } finally {
+    if (active?.id) {
+      try { await chrome.tabs.update(active.id, { active: true }); } catch (e){
+        console.error(e);
+      }
+    }
+    if (rwTabId != null) {
+      try { await chrome.tabs.remove(rwTabId); } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+  return dataUrl;
+}
+
 export function* likeRtQuoteReplySage(action: PayloadAction) {
   if (action.type !== automatedTasksActions.setlikeRtQuoteReplyStatus.type) {
     return;
@@ -164,7 +217,9 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
       data: currentVerified.data
     }));
     yield delay(1000);
-    const verifiedRadioWaterMelonUsers = Array.from(((yield select(verifiedByRadioWaterMelonSelector)).data) as Set<string>);
+    const state = yield select(verifiedByRadioWaterMelonSelector);
+    const verifiedSet = state.data as Set<string>;
+    const verifiedRadioWaterMelonUsers = Array.from(verifiedSet);
     const sourceReplies: SourceReplies = yield select(sourceRepliesSelector);
     const likeRtThresholdDuration: number = yield select(likeRtThresholdDurationSelector);
     const sourceToTargetThresholdDuration: number = yield select(sourceToTargetThresholdDurationSelector);
@@ -198,6 +253,17 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
             yield call(updateTab, tabId, {url: tweetURL.url});
             yield delay(4000);
           }
+          const usernameExtracted = (extractUsernameFromXUrl(tweetURL.url) ?? '').replace(/^@/, '').toLowerCase();
+          const isRadioWaterMelonVerified = verifiedSet.has(usernameExtracted);
+          let rwScreenshot: string | undefined;
+          if (isRadioWaterMelonVerified) {
+            const rwUrl = buildRwUrlForUser(usernameExtracted, verifiedSet);
+            if (rwUrl) {
+              const shot: string = (yield call(getRwScreenshot, rwUrl)) as string;
+              if (shot) rwScreenshot = shot;
+            }
+          }
+
           const request: ControllerToLikeAndRtRequest = {
             type: REQUEST_LIKE_AND_RT,
             url: tweetURL.url,
@@ -210,6 +276,7 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
             timestamp: sourceReplies[tweetURL.url]?.timestamp ?? 0,
             userInput,
             verifiedRadioWaterMelonUsers,
+            rwScreenshot,
           }
           const startTime = Date.now();
           const response: LikeAndRtToControllerResponse = yield call(sendMessageToTab, tabId, request);
@@ -255,6 +322,17 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
           yield call(updateTab, tabId, {url});
           yield delay(4000);
         }
+        const handleF = following.username.replace(/^@/, '').toLowerCase();
+        const isRadioWaterMelonVerified = verifiedSet.has(handleF);
+        let rwScreenshot: string | undefined;
+        if (isRadioWaterMelonVerified) {
+          const rwUrl = buildRwUrlForUser(handleF, verifiedSet);
+          if (rwUrl) {
+            const shot: string = (yield call(getRwScreenshot, rwUrl)) as string;
+            if (shot) rwScreenshot = shot;
+          }
+        }
+
         const request: ControllerToLikeAndRtRequest = {
           type: REQUEST_LIKE_AND_RT,
           url,
@@ -264,7 +342,8 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
           threshold: likeRtThresholdDuration,
           fundraiserExcludedURLs,
           userInput,
-          verifiedRadioWaterMelonUsers
+          verifiedRadioWaterMelonUsers,
+          rwScreenshot
         }
         const startTime = Date.now();
         const response: LikeAndRtToControllerResponse = yield call(sendMessageToTab, tabId, request);
@@ -305,11 +384,10 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
         }
       }
     }
-    yield delay(250); // sometimes ui closes despite tweeURLs hence for debugging it
+    yield delay(500);
     tweetURL = yield* getFirstFoundTweetURL();
     following = yield* getFirstFilteredFollowing();
   }
-
   yield* cleanupTabs(tabId, targetURLsToTabIdMap);
   yield put(automatedTasksActions.setlikeRtQuoteReplyStatus({status: AutomatedTaskStatusEnum.Success}));
   return;
