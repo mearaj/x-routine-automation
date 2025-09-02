@@ -10,8 +10,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import {ArrowBack, Delete} from '@mui/icons-material';
-import {NavLink} from 'react-router';
+import {Delete} from '@mui/icons-material';
 import {useAppDispatch, useAppSelector} from '@/store/store';
 import {type ChangeEvent, useState} from 'react';
 import {
@@ -22,7 +21,6 @@ import {
 } from "@/utils/automatedTasks.ts";
 import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
 import {
-  activeUsernameSelector,
   followingsSelector,
   followingThresholdDurationSelector,
   likeRtQuoteReplyStatusSelector,
@@ -42,7 +40,6 @@ import {userActions} from "@/store/slices/userSlice.ts";
 function ManageTweetsPage() {
   const dispatch = useAppDispatch();
   const verifiedByRadioWaterMelon = useAppSelector(verifiedByRadioWaterMelonSelector);
-  const activeUsername = useAppSelector(activeUsernameSelector);
   const sourceUrls = useAppSelector(sourceTweetURLsSelector);
   const targetUrls = useAppSelector(targetTweetURLsSelector);
   const replyStatus = useAppSelector(likeRtQuoteReplyStatusSelector);
@@ -153,21 +150,23 @@ function ManageTweetsPage() {
     dispatch(automatedTasksActions.setUserInput(defaultUserInput));
   };
 
-  const handleMergeVerifiedWithFollowings = () => {
-    const existingUsernames = new Set(followings.map(f => f.username.toLowerCase()));
-    const verifiedToAdd = Array.from(verifiedByRadioWaterMelon.data)
-    .map(u => u[0].trim())
-    .filter(u => u && !existingUsernames.has(u.toLowerCase()))
+const handleMergeVerifiedWithFollowings = () => {
+  const existingUsernames = new Set(followings.map(f => f.username.replace(/^@/, '').toLowerCase()));
+
+  const verifiedToAdd = Array.from(verifiedByRadioWaterMelon.data)
+    .map(u => String(u).replace(/^@/, '').toLowerCase())
+    .filter(u => u && !existingUsernames.has(u))
     .map(u => ({
-      username: u,
+      username: u,     // store normalized handle; add "@" later if your UI expects it
       mutual: false,
       timestamp: 0,
     }));
 
-    if (verifiedToAdd.length > 0) {
-      dispatch(userActions.addOrUpdateFollowings({followings: verifiedToAdd}));
-    }
-  };
+  if (verifiedToAdd.length > 0) {
+    dispatch(userActions.addOrUpdateFollowings({ followings: verifiedToAdd }));
+  }
+};
+
 
   const fileToRtImage = (file: File): Promise<RtImage> => {
     return new Promise((resolve, reject) => {
@@ -182,14 +181,6 @@ function ManageTweetsPage() {
 
   return (
     <Box p={2}>
-      <NavLink to="../"><ArrowBack/></NavLink>
-
-      {activeUsername && (
-        <Typography gutterBottom>
-          Active user: <strong>{activeUsername}</strong>
-        </Typography>
-      )}
-
       <Box mt={3}>
         <Typography variant="h6">Source URLs</Typography>
         <Box display="flex" gap={1} mt={1} alignItems="center">
@@ -379,22 +370,20 @@ function ManageTweetsPage() {
           variant="outlined"
           size="large"
           onClick={() => {
-            const usernames = Array.from(verifiedByRadioWaterMelon.data.keys())
-            .map(u => u[0].trim())
+            // Set<string> of already-normalized handles (no "@")
+            const usernames = Array.from(verifiedByRadioWaterMelon.data)
+            .map(u => String(u).trim())
             .filter(Boolean);
 
-            const jsonBlob = new Blob(
-              [JSON.stringify(usernames, null, 2)],
-              {type: 'application/json'}
-            );
-
+            const jsonBlob = new Blob([JSON.stringify(usernames, null, 2)], {type: 'application/json'});
             const url = URL.createObjectURL(jsonBlob);
             const a = document.createElement('a');
             a.href = url;
             a.download = 'verifiedUsers.json';
+            document.body.appendChild(a); // improves Safari/Firefox reliability
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
-
           }}
         >
           Export Verified Users

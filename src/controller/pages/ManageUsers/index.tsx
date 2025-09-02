@@ -1,26 +1,24 @@
-import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import {useState} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
+import type {SelectChangeEvent} from '@mui/material';
 import {
   Box,
-  Typography,
-  TextField,
   Button,
-  Select,
-  MenuItem,
   FormControl,
-  InputLabel,
   IconButton,
+  InputLabel,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  MenuItem,
+  Select,
+  TextField,
+  Typography
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
-import type { SelectChangeEvent } from '@mui/material';
-import type { RootState } from '@/store/store.ts';
-import { userActions } from '@/store/slices/userSlice.ts';
-import { ArrowBack } from '@mui/icons-material';
-import {NavLink} from "react-router";
+import type {RootState} from '@/store/store.ts';
+import {userActions} from '@/store/slices/userSlice.ts';
 
 const ManageUsersPage = () => {
   const dispatch = useDispatch();
@@ -52,14 +50,6 @@ const ManageUsersPage = () => {
 
   return (
     <Box p={2}>
-      <NavLink to="../" >
-        <ArrowBack/>
-        {activeUsername && (
-          <Typography gutterBottom>
-            Active user: <strong>{activeUsername}</strong>
-          </Typography>
-        )}
-      </NavLink>
       {usernames.length > 1 && (
         <FormControl size="small" fullWidth sx={{ mt: 2 }}>
           <InputLabel id="switch-user-label">Switch User</InputLabel>

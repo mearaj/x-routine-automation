@@ -1,7 +1,6 @@
 // ManageURLsPage.tsx
 import {Box, Button, IconButton, List, ListItem, ListItemText, TextField, Typography} from "@mui/material";
-import {NavLink} from "react-router";
-import {ArrowBack, Delete} from "@mui/icons-material";
+import {Delete} from "@mui/icons-material";
 import {useDispatch, useSelector} from "react-redux";
 import type {RootState} from "@/store/store.ts";
 import {userActions} from "@/store/slices/userSlice.ts";
@@ -125,14 +124,6 @@ const ManageURLsPage = () => {
 
   return (
     <Box p={2}>
-      <NavLink to="../"><ArrowBack/></NavLink>
-
-      {activeUsername && (
-        <Typography gutterBottom>
-          Active user: <strong>{activeUsername}</strong>
-        </Typography>
-      )}
-
       <UrlManagerSection
         label="Fundraiser URLs"
         excluded={false}
