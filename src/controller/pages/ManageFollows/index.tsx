@@ -11,8 +11,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import {ArrowBack, Delete, ExpandMore} from '@mui/icons-material';
-import {NavLink} from 'react-router';
+import {Delete, ExpandMore} from '@mui/icons-material';
 import {useAppDispatch, useAppSelector} from '@/store/store.ts';
 import {userActions} from '@/store/slices/userSlice.ts';
 import {useState} from "react";
@@ -76,14 +75,6 @@ function ManageFollowsPage() {
 
   return (
     <Box p={2}>
-      <NavLink to="../"><ArrowBack/></NavLink>
-
-      {activeUsername && (
-        <Typography gutterBottom>
-          Active user: <strong>{activeUsername}</strong>
-        </Typography>
-      )}
-
       <Box display="flex" gap={1} mt={2}>
         <TextField
           size="small"
