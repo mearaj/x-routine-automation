@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import {Delete} from '@mui/icons-material';
 import {useAppDispatch, useAppSelector} from '@/store/store';
-import {type ChangeEvent, useState} from 'react';
+import {type ChangeEvent, useRef, useState} from 'react';
 import {
   AutomatedTaskStatusEnum,
   type ControllerToLikeAndRtInput,
@@ -32,7 +32,7 @@ import {
   targetTweetURLsSelector,
   verifiedByRadioWaterMelonSelector
 } from "@/store/selectors.ts";
-import {defaultUserInput, extractUsername} from "@/utils/common.ts";
+import {emptyUserInput, extractUsername} from "@/utils/common.ts";
 import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
 import {userActions} from "@/store/slices/userSlice.ts";
 
@@ -56,6 +56,9 @@ function ManageTweetsPage() {
   const watermelonUsernames = verifiedByRadioWaterMelon.data;
   const resolvedUsername = extractUsername(checkUsernameInput);
   const followings = useAppSelector(followingsSelector);
+  const draggingIndexRef = useRef<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
 
   const normalizedVerifiedSet = new Set(
     Array.from(watermelonUsernames).map(u => u[0].toLowerCase())
@@ -147,13 +150,13 @@ function ManageTweetsPage() {
   };
 
   const handleResetUserInput = () => {
-    dispatch(automatedTasksActions.setUserInput(defaultUserInput));
+    dispatch(automatedTasksActions.setUserInput(emptyUserInput));
   };
 
-const handleMergeVerifiedWithFollowings = () => {
-  const existingUsernames = new Set(followings.map(f => f.username.replace(/^@/, '').toLowerCase()));
+  const handleMergeVerifiedWithFollowings = () => {
+    const existingUsernames = new Set(followings.map(f => f.username.replace(/^@/, '').toLowerCase()));
 
-  const verifiedToAdd = Array.from(verifiedByRadioWaterMelon.data)
+    const verifiedToAdd = Array.from(verifiedByRadioWaterMelon.data)
     .map(u => String(u).replace(/^@/, '').toLowerCase())
     .filter(u => u && !existingUsernames.has(u))
     .map(u => ({
@@ -162,10 +165,10 @@ const handleMergeVerifiedWithFollowings = () => {
       timestamp: 0,
     }));
 
-  if (verifiedToAdd.length > 0) {
-    dispatch(userActions.addOrUpdateFollowings({ followings: verifiedToAdd }));
-  }
-};
+    if (verifiedToAdd.length > 0) {
+      dispatch(userActions.addOrUpdateFollowings({followings: verifiedToAdd}));
+    }
+  };
 
 
   const fileToRtImage = (file: File): Promise<RtImage> => {
@@ -177,7 +180,43 @@ const handleMergeVerifiedWithFollowings = () => {
       reader.readAsDataURL(file);
     });
   };
+// Add these handlers (place them with the other handlers)
+  const onDragStartSource = (e: React.DragEvent, index: number) => {
+    draggingIndexRef.current = index;
+    // some browsers require data to be set for drag to start
+    try {
+      e.dataTransfer?.setData('text/plain', String(index));
+    } catch (err) {
+      console.error('Error setting data for drag start:', err);
+    }
+    e.dataTransfer!.effectAllowed = 'move';
+  };
 
+  const onDragOverSource = (e: React.DragEvent, index: number) => {
+    e.preventDefault(); // necessary to allow drop
+    if (dragOverIndex !== index) setDragOverIndex(index);
+  };
+
+  const onDropSource = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    const fromIndex = draggingIndexRef.current ?? Number(e.dataTransfer?.getData('text/plain'));
+    const toIndex = index;
+
+    draggingIndexRef.current = null;
+    setDragOverIndex(null);
+
+    if (fromIndex === toIndex) return;
+
+    const newOrder = Array.from(sourceUrls);
+    const [moved] = newOrder.splice(fromIndex, 1);
+    newOrder.splice(toIndex, 0, moved);
+    dispatch(automatedTasksActions.replaceSourceTweetURL({sourceTweetURLs: newOrder}));
+  };
+
+  const onDragEndSource = () => {
+    draggingIndexRef.current = null;
+    setDragOverIndex(null);
+  };
 
   return (
     <Box p={2}>
@@ -205,27 +244,42 @@ const handleMergeVerifiedWithFollowings = () => {
           </Button>
         </Box>
 
-        <List dense>
-          {sourceUrls.map(({url, isGaza}) => (
-            <ListItem
-              key={url}
-              secondaryAction={
-                <>
-                  <Checkbox
-                    edge="end"
-                    checked={isGaza}
-                    onChange={() => handleToggleIsGaza(url)}
-                  />
-                  <IconButton edge="end" onClick={() => handleRemoveSource(url)}>
-                    <Delete/>
-                  </IconButton>
-                </>
-              }
-            >
-              <ListItemText primary={url}/>
-            </ListItem>
-          ))}
-        </List>
+        <Box mt={1} sx={{maxHeight: '50vh', overflow: 'auto'}}>
+          <List dense>
+            {sourceUrls.map(({url, isGaza}, index) => (
+              <ListItem
+                key={url}
+                component="div"            // make sure draggable is applied to a div-like element
+                draggable
+                onDragStart={(e) => onDragStartSource(e, index)}
+                onDragOver={(e) => onDragOverSource(e, index)}
+                onDrop={(e) => onDropSource(e, index)}
+                onDragEnd={onDragEndSource}
+                secondaryAction={
+                  <>
+                    <Checkbox
+                      edge="end"
+                      checked={isGaza}
+                      onChange={() => handleToggleIsGaza(url)}
+                    />
+                    <IconButton edge="end" onClick={() => handleRemoveSource(url)}>
+                      <Delete/>
+                    </IconButton>
+                  </>
+                }
+                sx={{
+                  cursor: 'grab',
+                  userSelect: 'none',
+                  // visual cue for drop target:
+                  backgroundColor: dragOverIndex === index ? 'rgba(0,0,0,0.04)' : 'transparent',
+                  transition: 'background-color 120ms',
+                }}
+              >
+                <ListItemText primary={url}/>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
       </Box>
 
       <Box mt={4}>
@@ -461,9 +515,9 @@ const handleMergeVerifiedWithFollowings = () => {
                     variant="outlined"
                     onClick={() =>
                       handleUpdateUserInput('rtImage', {
-                        base64: defaultUserInput.rtImage!.base64,
-                        name: defaultUserInput.rtImage!.name,
-                        type: defaultUserInput.rtImage!.type,
+                        base64: emptyUserInput.rtImage!.base64,
+                        name: emptyUserInput.rtImage!.name,
+                        type: emptyUserInput.rtImage!.type,
                       })
                     }
                   >
@@ -530,9 +584,9 @@ const handleMergeVerifiedWithFollowings = () => {
                     variant="outlined"
                     onClick={() =>
                       handleUpdateUserInput('gazaRtImage', {
-                        base64: defaultUserInput.gazaRtImage!.base64,
-                        name: defaultUserInput.gazaRtImage!.name,
-                        type: defaultUserInput.gazaRtImage!.type,
+                        base64: emptyUserInput.gazaRtImage!.base64,
+                        name: emptyUserInput.gazaRtImage!.name,
+                        type: emptyUserInput.gazaRtImage!.type,
                       })
                     }
                   >

@@ -17,4 +17,8 @@ export function* watchAutomatedTasksSaga(): Generator {
   yield takeEvery(automatedTasksActions.removeSourceReplies.type, handleAppStateChange);
   yield takeEvery(automatedTasksActions.setMinWaitingTimeForFollowing.type, handleAppStateChange);
   yield takeEvery(automatedTasksActions.setMinWaitingTimeForTweet.type, handleAppStateChange);
+  yield takeEvery(automatedTasksActions.addSourceTweetURLs, handleAppStateChange);
+  yield takeEvery(automatedTasksActions.removeSourceTweetURLs, handleAppStateChange);
+  yield takeEvery(automatedTasksActions.updateSourceTweetIsGaza, handleAppStateChange);
+  yield takeEvery(automatedTasksActions.replaceSourceTweetURL, handleAppStateChange);
 }

@@ -3,7 +3,7 @@ import type {RootState} from "../store";
 import {AutomatedTaskStatusEnum} from "../utils/automatedTasks.ts";
 import type {Following} from "../utils/following.ts";
 import {
-  defaultUserInput,
+  emptyUserInput,
   followingThresholdDuration as commonFollowingThresholdDuration,
   likeRtThresholdDuration as commonLikeRtThresholdDuration,
   minWaitingTimeForFollowing,
@@ -28,6 +28,7 @@ export const saveAppStateToStorage = async (appState: RootState): Promise<void> 
     await chrome.storage.local.set({[`${userState.activeUsername}:userInput`]: automatedTasksState.userInput});
     await chrome.storage.local.set({[`${userState.activeUsername}:minWaitingTimeForFollowing`]: automatedTasksState.minWaitingTimeForFollowing});
     await chrome.storage.local.set({[`${userState.activeUsername}:minWaitingTimeForTweet`]: automatedTasksState.minWaitingTimeForTweet});
+    await chrome.storage.local.set({[`${userState.activeUsername}:sourceTweetURLs`]: automatedTasksState.sourceTweetURLs});
   }
 }
 
@@ -61,7 +62,7 @@ export const getAppStateFromStorage = async (): Promise<{
         targetTweetURLs: [],
         minWaitingTimeForFollowing,
         minWaitingTimeForTweet,
-        userInput: defaultUserInput,
+        userInput: emptyUserInput,
         verifiedByRadioWaterMelonState: {
           data: new Set<string>(),
           state: "idle",
@@ -121,14 +122,11 @@ export const getAppStateFromStorage = async (): Promise<{
   const userInput =
     (await chrome.storage.local.get([`${activeUsername}:userInput`]))[
       `${activeUsername}:userInput`
-      ] ?? defaultUserInput;
-  if (userInput.rtImage === undefined) {
-    userInput.rtImage = defaultUserInput.rtImage;
-  }
-
-  if (userInput.gazaRtImage === undefined) {
-    userInput.gazaRtImage = defaultUserInput.gazaRtImage;
-  }
+      ] ?? emptyUserInput;
+    const sourceTweetURLs =
+    (await chrome.storage.local.get([`${activeUsername}:sourceTweetURLs`]))[
+      `${activeUsername}:sourceTweetURLs`
+      ] ?? [];
 
 
   return {
@@ -147,7 +145,7 @@ export const getAppStateFromStorage = async (): Promise<{
       followingThresholdDuration: followingThresholdDuration,
       collectingFollowingsTask: AutomatedTaskStatusEnum.Idle,
       likeRtQuoteReplyStatus: AutomatedTaskStatusEnum.Idle,
-      sourceTweetURLs: [],
+      sourceTweetURLs,
       targetTweetURLs: [],
       minWaitingTimeForFollowing: derivedMinWaitingTimeForFollowing,
       minWaitingTimeForTweet: derivedMinWaitingTimeForTweet,
