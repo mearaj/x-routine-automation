@@ -282,8 +282,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     if (imageToInsert && typeof imageToInsert === 'object' && imageToInsert.base64?.startsWith('data:image/')) {
       try {
         const blob = await (await fetch(imageToInsert.base64)).blob();
-        const file = new File([blob], imageToInsert.name, {type: imageToInsert.type});
-
+        const file = new window.File([blob], imageToInsert.name, { type: imageToInsert.type });
         const dt = new DataTransfer();
         dt.items.add(file);
 
