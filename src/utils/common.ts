@@ -1,6 +1,4 @@
 import type {ControllerToLikeAndRtInput} from "@/utils/automatedTasks.ts";
-import {DEFAULT_RT_IMAGE_BASE64} from "./rtImage.ts";
-import {DEFAULT_GAZA_RT_IMAGE_BASE64} from "./gazaRtImage.ts";
 
 export const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -32,26 +30,18 @@ export const extractUsername = (input: string): string | null => {
   return mUrl ? mUrl[1].toLowerCase() : null;
 };
 
-export const likeRtThresholdDuration = 1000 * 60 * 60 * 12;
-export const sourceToTargetThresholdDuration = 1000 * 60 * 60 * 12;
-export const followingThresholdDuration = 1000 * 60 * 60 * 12;
-export const minWaitingTimeForFollowing = 1000 * 18;
-export const minWaitingTimeForTweet = 1000 * 18;
-export const defaultUserInput: ControllerToLikeAndRtInput = {
-  rtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ",
-  rtImage: {
-    base64: DEFAULT_RT_IMAGE_BASE64,
-    type: "image/gif",
-    name: "defaultRtImage.gif"
-  },
-  quoteText: "",
-  gazaRtText: "حَسْبُنَا اللَّهُ وَنِعْمَ الوَكِيلُ\n" + "❤️ 💔 🤲 🇵🇸",
-  gazaRtImage: {
-    base64: DEFAULT_GAZA_RT_IMAGE_BASE64,
-    type: "image/gif",
-    name: "defaultGazaRtImage.gif"
-  },
-  gazaQuoteText: "👇👇👇👇👇",
+export const likeRtThresholdDuration = 1000 * 60 * 60 * 24;
+export const sourceToTargetThresholdDuration = 1000 * 60 * 60 * 24;
+export const followingThresholdDuration = 1000 * 60 * 60 * 24;
+export const minWaitingTimeForFollowing = 1000 * 108;
+export const minWaitingTimeForTweet = 1000 * 108;
+export const emptyUserInput: ControllerToLikeAndRtInput = {
+  rtText: '',
+  rtImage: null,
+  quoteText: '',
+  gazaRtText: '',
+  gazaRtImage: null,
+  gazaQuoteText: ''
 }
 
 export function extractUsernameFromXUrl(url: string) {

@@ -9,7 +9,7 @@ import {
   type SourceTweetURL,
 } from "@/utils/automatedTasks.ts";
 import {
-  defaultUserInput,
+  emptyUserInput,
   followingThresholdDuration,
   likeRtThresholdDuration,
   minWaitingTimeForFollowing,
@@ -30,7 +30,7 @@ const initialState: AutomatedTasks = {
   followingThresholdDuration: followingThresholdDuration,
   minWaitingTimeForFollowing,
   minWaitingTimeForTweet,
-  userInput: defaultUserInput,
+  userInput: emptyUserInput,
 }
 
 const automatedTasks = createSlice({
@@ -46,13 +46,11 @@ const automatedTasks = createSlice({
     setlikeRtQuoteReplyStatus: (state: AutomatedTasks, action: PayloadAction<{ status: AutomatedTasksStatus, }>) => {
       state.likeRtQuoteReplyStatus = action.payload.status;
     },
-    setNewSourceTweetURLs: (
+    replaceSourceTweetURL: (
       state: AutomatedTasks,
-      action: PayloadAction<{ sourceURLs: SourceTweetURL[] }>
+      action: PayloadAction<{ sourceTweetURLs: SourceTweetURL[] }>
     ) => {
-      const urlSet = new Set(action.payload.sourceURLs.map(e => e.url));
-      state.sourceTweetURLs = action.payload.sourceURLs.filter(e => urlSet.has(e.url));
-
+      state.sourceTweetURLs = action.payload.sourceTweetURLs;
     },
     addSourceTweetURLs: (
       state: AutomatedTasks,
