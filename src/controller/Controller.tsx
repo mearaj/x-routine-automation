@@ -108,7 +108,7 @@ const activeUsername = useSelector((state: RootState) => state.user.activeUserna
         <Box sx={{ px: 1.5, pb: 1.5 }}>
           {!collapsed && (
             <Typography variant="caption" color="text.secondary">
-              v1.0.21
+              v1.0.22
             </Typography>
           )}
         </Box>
