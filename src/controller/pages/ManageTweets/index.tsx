@@ -35,7 +35,7 @@ import {
 import {emptyUserInput, extractUsername} from "@/utils/common.ts";
 import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
 import {userActions} from "@/store/slices/userSlice.ts";
-
+import * as React from "react";
 
 function ManageTweetsPage() {
   const dispatch = useAppDispatch();
@@ -59,25 +59,24 @@ function ManageTweetsPage() {
   const draggingIndexRef = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-
+  // preserve original intent: watermelonUsernames may be iterable of [username,...] or strings
   const normalizedVerifiedSet = new Set(
-    Array.from(watermelonUsernames).map(u => u[0].toLowerCase())
+    Array.from(watermelonUsernames).map(u => (Array.isArray(u) ? String(u[0]).toLowerCase() : String(u).toLowerCase()))
   );
   const isVerified = resolvedUsername
     ? normalizedVerifiedSet.has(resolvedUsername.toLowerCase())
     : null;
   const [removeHistoryInput, setRemoveHistoryInput] = useState('');
 
-
   const handleAddSource = () => {
     const trimmed = newSource.url.trim();
     if (!trimmed) return;
     dispatch(automatedTasksActions.addSourceTweetURLs([{url: trimmed, isGaza: newSource.isGaza}]));
-    setNewSource({url: '', isGaza: true});
+    setNewSource({url: '', isGaza: newSource.isGaza});
   };
 
   const handleToggleIsGaza = (url: string) => {
-    const entry = sourceUrls.find(e => e.url === url);
+    const entry = sourceUrls.find(e => e && e.url === url);
     if (!entry) return;
     dispatch(automatedTasksActions.updateSourceTweetIsGaza({url, isGaza: !entry.isGaza}));
   };
@@ -160,7 +159,7 @@ function ManageTweetsPage() {
     .map(u => String(u).replace(/^@/, '').toLowerCase())
     .filter(u => u && !existingUsernames.has(u))
     .map(u => ({
-      username: u,     // store normalized handle; add "@" later if your UI expects it
+      username: u,
       mutual: false,
       timestamp: 0,
     }));
@@ -169,7 +168,6 @@ function ManageTweetsPage() {
       dispatch(userActions.addOrUpdateFollowings({followings: verifiedToAdd}));
     }
   };
-
 
   const fileToRtImage = (file: File): Promise<RtImage> => {
     return new Promise((resolve, reject) => {
@@ -180,37 +178,57 @@ function ManageTweetsPage() {
       reader.readAsDataURL(file);
     });
   };
-// Add these handlers (place them with the other handlers)
+
+  // ---------------------------
+  // Drag & Drop Handlers (robust)
+  // ---------------------------
   const onDragStartSource = (e: React.DragEvent, index: number) => {
+    // primary source of truth: ref
     draggingIndexRef.current = index;
-    // some browsers require data to be set for drag to start
+    // backup for browsers that require dataTransfer
     try {
       e.dataTransfer?.setData('text/plain', String(index));
     } catch (err) {
-      console.error('Error setting data for drag start:', err);
+      console.error('Error setting dataTransfer:', err);
     }
-    e.dataTransfer!.effectAllowed = 'move';
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
   };
 
   const onDragOverSource = (e: React.DragEvent, index: number) => {
-    e.preventDefault(); // necessary to allow drop
+    e.preventDefault(); // allow drop
     if (dragOverIndex !== index) setDragOverIndex(index);
   };
 
   const onDropSource = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    const fromIndex = draggingIndexRef.current ?? Number(e.dataTransfer?.getData('text/plain'));
+
+    // prefer ref (most reliable), fallback to dataTransfer index
+    const raw = draggingIndexRef.current ?? Number(e.dataTransfer?.getData('text/plain'));
+    const fromIndex = Number.isFinite(raw) ? Number(raw) : null;
     const toIndex = index;
 
+    // reset drag state
     draggingIndexRef.current = null;
     setDragOverIndex(null);
 
+    // validations to avoid creating undefined/null entries
+    if (fromIndex === null || fromIndex === undefined) return;
     if (fromIndex === toIndex) return;
+    if (!Array.isArray(sourceUrls)) return;
 
     const newOrder = Array.from(sourceUrls);
+    if (fromIndex < 0 || fromIndex >= newOrder.length) return;
+    if (toIndex < 0 || toIndex > newOrder.length) return;
+
     const [moved] = newOrder.splice(fromIndex, 1);
+    if (!moved) return; // nothing to move (defensive)
+
     newOrder.splice(toIndex, 0, moved);
-    dispatch(automatedTasksActions.replaceSourceTweetURL({sourceTweetURLs: newOrder}));
+
+    // ensure we never persist falsy items
+    dispatch(automatedTasksActions.replaceSourceTweetURL({
+      sourceTweetURLs: newOrder.filter(Boolean),
+    }));
   };
 
   const onDragEndSource = () => {
@@ -218,6 +236,9 @@ function ManageTweetsPage() {
     setDragOverIndex(null);
   };
 
+  // ---------------------------
+  // Render
+  // ---------------------------
   return (
     <Box p={2}>
       <Box mt={3}>
@@ -246,38 +267,42 @@ function ManageTweetsPage() {
 
         <Box mt={1} sx={{maxHeight: '50vh', overflow: 'auto'}}>
           <List dense>
-            {sourceUrls.map(({url, isGaza}, index) => (
-              <ListItem
-                key={url}
-                component="div"            // make sure draggable is applied to a div-like element
-                draggable
-                onDragStart={(e) => onDragStartSource(e, index)}
-                onDragOver={(e) => onDragOverSource(e, index)}
-                onDrop={(e) => onDropSource(e, index)}
-                onDragEnd={onDragEndSource}
-                secondaryAction={
-                  <>
-                    <Checkbox
-                      edge="end"
-                      checked={isGaza}
-                      onChange={() => handleToggleIsGaza(url)}
-                    />
-                    <IconButton edge="end" onClick={() => handleRemoveSource(url)}>
-                      <Delete/>
-                    </IconButton>
-                  </>
-                }
-                sx={{
-                  cursor: 'grab',
-                  userSelect: 'none',
-                  // visual cue for drop target:
-                  backgroundColor: dragOverIndex === index ? 'rgba(0,0,0,0.04)' : 'transparent',
-                  transition: 'background-color 120ms',
-                }}
-              >
-                <ListItemText primary={url}/>
-              </ListItem>
-            ))}
+            {/* defensive: filter out falsy entries; use safe key fallback */}
+            {(Array.isArray(sourceUrls) ? sourceUrls : []).filter(Boolean).map((item, index) => {
+              const url = item?.url ?? '';
+              const isGaza = !!item?.isGaza;
+              return (
+                <ListItem
+                  key={url || index}
+                  component="div"
+                  draggable
+                  onDragStart={(e) => onDragStartSource(e, index)}
+                  onDragOver={(e) => onDragOverSource(e, index)}
+                  onDrop={(e) => onDropSource(e, index)}
+                  onDragEnd={onDragEndSource}
+                  secondaryAction={
+                    <>
+                      <Checkbox
+                        edge="end"
+                        checked={isGaza}
+                        onChange={() => handleToggleIsGaza(url)}
+                      />
+                      <IconButton edge="end" onClick={() => handleRemoveSource(url)}>
+                        <Delete/>
+                      </IconButton>
+                    </>
+                  }
+                  sx={{
+                    cursor: 'grab',
+                    userSelect: 'none',
+                    backgroundColor: dragOverIndex === index ? 'rgba(0,0,0,0.04)' : 'transparent',
+                    transition: 'background-color 120ms',
+                  }}
+                >
+                  <ListItemText primary={url}/>
+                </ListItem>
+              );
+            })}
           </List>
         </Box>
       </Box>
@@ -297,7 +322,7 @@ function ManageTweetsPage() {
           </Button>
         </Box>
         <List dense>
-          {targetUrls.map(url => (
+          {Array.isArray(targetUrls) ? targetUrls.map(url => (
             <ListItem
               key={url}
               secondaryAction={
@@ -308,7 +333,7 @@ function ManageTweetsPage() {
             >
               <ListItemText primary={url}/>
             </ListItem>
-          ))}
+          )) : null}
         </List>
       </Box>
 
@@ -337,7 +362,6 @@ function ManageTweetsPage() {
           </Button>
         </Box>
       </Box>
-
 
       <Box mt={4}>
         <Typography variant="h6">Threshold Durations</Typography>
@@ -383,7 +407,6 @@ function ManageTweetsPage() {
             fullWidth
             size="small"
           />
-
         </Box>
       </Box>
 
@@ -424,17 +447,16 @@ function ManageTweetsPage() {
           variant="outlined"
           size="large"
           onClick={() => {
-            // Set<string> of already-normalized handles (no "@")
             const usernames = Array.from(verifiedByRadioWaterMelon.data)
-            .map(u => String(u).trim())
-            .filter(Boolean);
+              .map(u => String(u).trim())
+              .filter(Boolean);
 
             const jsonBlob = new Blob([JSON.stringify(usernames, null, 2)], {type: 'application/json'});
             const url = URL.createObjectURL(jsonBlob);
             const a = document.createElement('a');
             a.href = url;
             a.download = 'verifiedUsers.json';
-            document.body.appendChild(a); // improves Safari/Firefox reliability
+            document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
@@ -465,7 +487,6 @@ function ManageTweetsPage() {
           </Typography>
         )}
       </Box>
-
 
       <Box mt={4} display="flex" justifyContent="flex-start">
         <Button variant="outlined" onClick={handleResetUserInput}>
@@ -616,8 +637,6 @@ function ManageTweetsPage() {
           )}
         </Box>
       </Box>
-
-
     </Box>
   );
 }
