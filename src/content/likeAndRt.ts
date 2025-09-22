@@ -176,10 +176,12 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   const like = tweet.querySelector("button[data-testid='like']") as HTMLElement | null;
   const retweet = tweet.querySelector("button[data-testid='retweet']") as HTMLElement | null;
   await wait(500); // sometimes like are missed, hence wait
+
   if (like) {
     like.click();
-    await wait(600);
+    await wait(1500);
   }
+
   if (retweet) {
     retweet.click();
     await wait(1000);
@@ -279,29 +281,56 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     const imageToInsert = isGaza ? userInput.gazaRtImage : userInput.rtImage;
     console.log("imageToInsert", imageToInsert);
 
-    if (imageToInsert && typeof imageToInsert === 'object' && imageToInsert.base64?.startsWith('data:image/')) {
+    // support both data:image/... and data:video/... (mp4/webm/etc.)
+    if (imageToInsert && typeof imageToInsert === 'object' && imageToInsert.base64?.startsWith('data:')) {
       try {
+        // convert data URL to blob
         const blob = await (await fetch(imageToInsert.base64)).blob();
-        const file = new window.File([blob], imageToInsert.name, { type: imageToInsert.type });
+        // ensure we have a sensible filename & type
+        const filename = imageToInsert.name || `media.${(blob.type || '').split('/')[1] || 'bin'}`;
+        const fileType = imageToInsert.type || blob.type || 'application/octet-stream';
+        const file = new window.File([blob], filename, {type: fileType});
         const dt = new DataTransfer();
         dt.items.add(file);
 
-        const fileInput = modalBox.querySelector('input[type="file"][accept*="image"]') as HTMLInputElement | null;
+        // Prefer inputs that explicitly accept images or videos, but fallback to any file input within modal
+        const fileInputSelectors = [
+          'input[type="file"][accept*="image"]',
+          'input[type="file"][accept*="video"]',
+          'input[type="file"][accept*="image,video"]',
+          'input[type="file"][data-testid="fileInput"]',
+          'input[type="file"]'
+        ];
+        let fileInput: HTMLInputElement | null = null;
+        for (const sel of fileInputSelectors) {
+          const el = modalBox.querySelector(sel) as HTMLInputElement | null;
+          if (el) {
+            fileInput = el;
+            break;
+          }
+        }
+
         if (fileInput) {
           fileInput.files = dt.files;
+          // dispatch both events to simulate user selection
           fileInput.dispatchEvent(new Event('input', {bubbles: true}));
           fileInput.dispatchEvent(new Event('change', {bubbles: true}));
-          await wait(2500);
-          console.log("✅ Image injected.");
+          // give the UI some time to accept the file and render a preview
+          await wait(3000);
+          if (imageToInsert.type.includes('video')) {
+            await wait(3000); // wait for video to load
+          }
+          console.log("✅ Media injected (image/video).");
         } else {
-          console.warn("❌ File input not found.");
+          console.warn("❌ File input not found in reply modal.");
         }
       } catch (e) {
-        console.error("⚠️ Failed to inject image:", e);
+        console.error("⚠️ Failed to inject media into reply:", e);
       }
     }
 
-    const postReplyBtn = modalBox.querySelector('button[data-testid="tweetButton"]:not([disabled])') as HTMLElement | null;
+    //const postReplyBtn = modalBox.querySelector('button[data-testid="tweetButton"]:not([disabled])') as HTMLElement | null;
+    const postReplyBtn = await waitForElement('button[data-testid="tweetButton"]:not([disabled])',10000, modalBox);
     if (postReplyBtn) {
       postReplyBtn.click();
       await wait(6000);

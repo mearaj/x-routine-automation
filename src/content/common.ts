@@ -1,14 +1,19 @@
-export const waitForElement = (selector: string, timeoutInMs = 10000): Promise<HTMLElement | null> => {
+export const waitForElement = (
+  selector: string,
+  timeoutInMs = 10000,
+  parent: ParentNode = document
+): Promise<HTMLElement | null> => {
   return new Promise((resolve) => {
 
-    const el = document.querySelector(selector) as HTMLElement | null;
+    const el = parent.querySelector(selector) as HTMLElement | null;
     if (el) {
       resolve(el);
+      return;
     }
 
     let resolved = false;
     const observer = new MutationObserver(() => {
-      const el = document.querySelector(selector);
+      const el = parent.querySelector(selector);
       if (el && el.isConnected && !resolved) {
         resolved = true;
         observer.disconnect();
@@ -17,7 +22,8 @@ export const waitForElement = (selector: string, timeoutInMs = 10000): Promise<H
       }
     });
 
-    observer.observe(document.body, {childList: true, subtree: true});
+    const observeTarget: Node = (parent instanceof Document) ? (parent.body ?? parent) : (parent as Node);
+    observer.observe(observeTarget, {childList: true, subtree: true});
 
     const timeout = setTimeout(() => {
       if (!resolved) {
@@ -28,6 +34,7 @@ export const waitForElement = (selector: string, timeoutInMs = 10000): Promise<H
     }, timeoutInMs);
   });
 };
+
 
 export const waitForNewElement = (selector: string, timeoutInMs = 10000): Promise<HTMLElement | null> => {
   return new Promise((resolve) => {
