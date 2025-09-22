@@ -519,11 +519,19 @@ function ManageTweetsPage() {
           {userInput.rtImage ? (
             <Box>
               <Box display="flex" gap={2} alignItems="center">
-                <img
-                  src={userInput.rtImage.base64}
-                  alt="RT"
-                  style={{maxHeight: 100, borderRadius: 4, border: '1px solid #ccc'}}
-                />
+                {userInput.rtImage.type?.startsWith('video/') ? (
+                  <video
+                    src={userInput.rtImage.base64}
+                    controls
+                    style={{maxHeight: 120, borderRadius: 4, border: '1px solid #ccc'}}
+                  />
+                ) : (
+                  <img
+                    src={userInput.rtImage.base64}
+                    alt="RT"
+                    style={{maxHeight: 100, borderRadius: 4, border: '1px solid #ccc'}}
+                  />
+                )}
                 <Box display="flex" gap={1}>
                   <Button
                     variant="outlined"
@@ -534,13 +542,7 @@ function ManageTweetsPage() {
                   </Button>
                   <Button
                     variant="outlined"
-                    onClick={() =>
-                      handleUpdateUserInput('rtImage', {
-                        base64: emptyUserInput.rtImage!.base64,
-                        name: emptyUserInput.rtImage!.name,
-                        type: emptyUserInput.rtImage!.type,
-                      })
-                    }
+                    onClick={() => handleUpdateUserInput('rtImage', emptyUserInput.rtImage)}
                   >
                     Reset to Default
                   </Button>
@@ -549,17 +551,17 @@ function ManageTweetsPage() {
             </Box>
           ) : (
             <Button variant="outlined" component="label">
-              Upload RT Image
+              Upload RT Media
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*"
                 hidden
                 onChange={async (e) => {
                   const input = e.target as HTMLInputElement;
                   const file = input.files?.[0];
                   if (file) {
                     const image = await fileToRtImage(file);
-                    console.log('📤 Uploaded RT image:', image);
+                    console.log('📤 Uploaded RT media:', image);
                     handleUpdateUserInput('rtImage', image);
                   }
                 }}
@@ -588,11 +590,19 @@ function ManageTweetsPage() {
           {userInput.gazaRtImage ? (
             <Box>
               <Box display="flex" gap={2} alignItems="center">
-                <img
-                  src={userInput.gazaRtImage.base64}
-                  alt="Gaza RT"
-                  style={{maxHeight: 100, borderRadius: 4, border: '1px solid #ccc'}}
-                />
+                {userInput.gazaRtImage.type?.startsWith('video/') ? (
+                  <video
+                    src={userInput.gazaRtImage.base64}
+                    controls
+                    style={{maxHeight: 120, borderRadius: 4, border: '1px solid #ccc'}}
+                  />
+                ) : (
+                  <img
+                    src={userInput.gazaRtImage.base64}
+                    alt="Gaza RT"
+                    style={{maxHeight: 100, borderRadius: 4, border: '1px solid #ccc'}}
+                  />
+                )}
                 <Box display="flex" gap={1}>
                   <Button
                     variant="outlined"
@@ -603,13 +613,7 @@ function ManageTweetsPage() {
                   </Button>
                   <Button
                     variant="outlined"
-                    onClick={() =>
-                      handleUpdateUserInput('gazaRtImage', {
-                        base64: emptyUserInput.gazaRtImage!.base64,
-                        name: emptyUserInput.gazaRtImage!.name,
-                        type: emptyUserInput.gazaRtImage!.type,
-                      })
-                    }
+                    onClick={() => handleUpdateUserInput('gazaRtImage', emptyUserInput.gazaRtImage)}
                   >
                     Reset to Default
                   </Button>
@@ -618,17 +622,17 @@ function ManageTweetsPage() {
             </Box>
           ) : (
             <Button variant="outlined" component="label">
-              Upload Gaza RT Image
+              Upload Gaza RT Media
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*"
                 hidden
                 onChange={async (e) => {
                   const input = e.target as HTMLInputElement;
                   const file = input.files?.[0];
                   if (file) {
                     const image = await fileToRtImage(file);
-                    console.log('📤 Uploaded Gaza RT image:', image);
+                    console.log('📤 Uploaded Gaza RT media:', image);
                     handleUpdateUserInput('gazaRtImage', image);
                   }
                 }}
