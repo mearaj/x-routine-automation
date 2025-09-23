@@ -130,10 +130,11 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
 
   const donateRegex = /donat(e|ion)/i;
   const gazaTestRegex = /gaza|palestine|🇵🇸/i;
-  const verifiedSet = new Set(verifiedRadioWaterMelonUsers.map(u => u.toLowerCase()));
-  const usernameFromTweet = extractUsernameFromXUrl(tweetUrl)?.toLowerCase() ?? "";
-  const isVerifiedRM = usernameFromTweet !== "" && verifiedSet.has(usernameFromTweet);
-
+  const verifiedArr = (Array.isArray(verifiedRadioWaterMelonUsers) ? verifiedRadioWaterMelonUsers : Array.from(verifiedRadioWaterMelonUsers ?? []))
+    .map(u => String(u ?? '').replace(/^@/, '').toLowerCase())
+    .filter(Boolean);
+  const usernameFromTweet = extractUsernameFromXUrl(tweetUrl)?.replace(/^@/, '').toLowerCase() ?? "";
+  const isVerifiedRM = usernameFromTweet !== "" && verifiedArr.includes(usernameFromTweet);
   let matched = false;
   const excluded = urlsToExclude.some((url) => {
     const lowercaseUrl = url.toLowerCase();
@@ -205,12 +206,16 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   response.timestamp = Date.now();
   const usernameExtracted = extractUsernameFromXUrl(response.url);
   console.log("usernameExtracted", usernameExtracted);
+  const verifiedArrForProfile = (Array.isArray(verifiedRadioWaterMelonUsers) ? verifiedRadioWaterMelonUsers : Array.from(verifiedRadioWaterMelonUsers ?? []))
+    .map(u => String(u ?? '').replace(/^@/, '').toLowerCase())
+    .filter(Boolean);
+
   let isWaterMelonVerified = false;
   if (usernameExtracted) {
-    isWaterMelonVerified = verifiedRadioWaterMelonUsers.includes(usernameExtracted.toLowerCase());
+    const handle = usernameExtracted.replace(/^@/, '').toLowerCase();
+    isWaterMelonVerified = verifiedArrForProfile.includes(handle);
   }
   isGaza = isGaza || isWaterMelonVerified;
-
   let commentText = userInput.gazaRtText;
   let quoteText = userInput.gazaQuoteText;
   if (!isGaza) {
