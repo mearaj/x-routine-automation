@@ -131,8 +131,8 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
   const donateRegex = /donat(e|ion)/i;
   const gazaTestRegex = /gaza|palestine|🇵🇸/i;
   const verifiedArr = (Array.isArray(verifiedRadioWaterMelonUsers) ? verifiedRadioWaterMelonUsers : Array.from(verifiedRadioWaterMelonUsers ?? []))
-    .map(u => String(u ?? '').replace(/^@/, '').toLowerCase())
-    .filter(Boolean);
+  .map(u => String(u ?? '').replace(/^@/, '').toLowerCase())
+  .filter(Boolean);
   const usernameFromTweet = extractUsernameFromXUrl(tweetUrl)?.replace(/^@/, '').toLowerCase() ?? "";
   const isVerifiedRM = usernameFromTweet !== "" && verifiedArr.includes(usernameFromTweet);
   let matched = false;
@@ -207,8 +207,8 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
   const usernameExtracted = extractUsernameFromXUrl(response.url);
   console.log("usernameExtracted", usernameExtracted);
   const verifiedArrForProfile = (Array.isArray(verifiedRadioWaterMelonUsers) ? verifiedRadioWaterMelonUsers : Array.from(verifiedRadioWaterMelonUsers ?? []))
-    .map(u => String(u ?? '').replace(/^@/, '').toLowerCase())
-    .filter(Boolean);
+  .map(u => String(u ?? '').replace(/^@/, '').toLowerCase())
+  .filter(Boolean);
 
   let isWaterMelonVerified = false;
   if (usernameExtracted) {
@@ -322,8 +322,20 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
           fileInput.dispatchEvent(new Event('change', {bubbles: true}));
           // give the UI some time to accept the file and render a preview
           await wait(3000);
-          if (imageToInsert.type.includes('video')) {
-            await wait(5000); // wait for video to load
+          const progressEl = modalBox.querySelector('div[aria-live="polite"][role="status"]') as HTMLElement | null;
+          console.log("progressEl", progressEl);
+          if (progressEl) {
+            const timeoutMs = 10000;
+            const intervalMs = 200;
+            const start = Date.now();
+            while (Date.now() - start < timeoutMs) {
+              const txt = (progressEl.textContent || '').trim();
+              console.log("txt", txt);
+              if (txt.includes('100%')) {
+                break;
+              }
+              await wait(intervalMs);
+            }
           }
           console.log("✅ Media injected (image/video).");
         } else {
@@ -335,7 +347,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     }
 
     //const postReplyBtn = modalBox.querySelector('button[data-testid="tweetButton"]:not([disabled])') as HTMLElement | null;
-    const postReplyBtn = await waitForElement('button[data-testid="tweetButton"]:not([disabled])',10000, modalBox);
+    const postReplyBtn = await waitForElement('button[data-testid="tweetButton"]:not([disabled])', 10000, modalBox);
     if (postReplyBtn) {
       postReplyBtn.click();
       await wait(6000);
@@ -386,7 +398,6 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
     cancelable: true
   });
   editor.dispatchEvent(pasteEvent);
-  console.log("rwScreenshot received inside content ", rwScreenshot);
   // QUOTE: attach RW screenshot if verified
   if (isWaterMelonVerified && rwScreenshot && rwScreenshot.startsWith('data:image/')) {
     try {

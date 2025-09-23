@@ -128,25 +128,66 @@ function buildRwUrlForUser(username: string, verifiedSet: Set<string>): string |
   return u.toString();
 }
 
-async function getRwScreenshot(rwUrl: string): Promise<string> {
-  const [active] = await chrome.tabs.query({active: true, currentWindow: true});
-  const idx = (active?.index ?? 0) + 1;
+async function getRwScreenshot(rwUrl: string, referenceTabId?: number): Promise<string> {
+  // Try to determine the "active" tab in the same window as referenceTabId (if provided).
+  // Fallback: use the currently active tab in the currentWindow (legacy behaviour).
+  let referenceTab: chrome.tabs.Tab | undefined;
+  try {
+    if (referenceTabId !== undefined && referenceTabId >= 0) {
+      referenceTab = await chrome.tabs.get(referenceTabId);
+    }
+  } catch (e) {
+    console.warn("[getRwScreenshot] chrome.tabs.get(referenceTabId) failed, falling back:", e);
+    referenceTab = undefined;
+  }
 
-  const rwTab = await chrome.tabs.create({
+  // Fallback to the active tab in the current window (previous behaviour)
+  let active: chrome.tabs.Tab | undefined;
+  try {
+    if (referenceTab) {
+      // get the active tab in the same window
+      const tabsInWindow = await chrome.tabs.query({active: true, windowId: referenceTab.windowId});
+      active = tabsInWindow[0];
+    } else {
+      const tabs = await chrome.tabs.query({active: true, currentWindow: true});
+      active = tabs[0];
+    }
+  } catch (e) {
+    console.warn("[getRwScreenshot] tabs.query failed, fallback to undefined active:", e);
+    active = undefined;
+  }
+
+  // Determine index where to open the RW tab (open right after the 'active' tab if possible)
+  const idx = (active?.index ?? -1) + 1;
+
+  // Build create properties. If we have a windowId, pass it to open the tab in that window.
+  const createProps: chrome.tabs.CreateProperties & { windowId?: number } = {
     url: rwUrl,
     active: false,
-    index: idx,
-    openerTabId: active?.id,
-  });
+  };
+  if (active && active.windowId != null) {
+    createProps.windowId = active.windowId;
+    createProps.index = idx >= 0 ? idx : undefined;
+    if (active.id != null) createProps.openerTabId = active.id;
+  }
+
+  // Create the RW tab in the desired window (or default window if not available)
+  const rwTab = await chrome.tabs.create(createProps as chrome.tabs.CreateProperties);
   const rwTabId = rwTab.id ?? null;
   if (rwTabId == null) return "";
 
+  // Give page some time to load; keep the previous wait behaviour
   await wait(6000);
 
   let dataUrl = "";
   try {
-    await chrome.tabs.update(rwTabId, {active: true});
-    await wait(200);
+    // Make RW tab active to let content script capture visible area (some capture flows require active tab)
+    try {
+      await chrome.tabs.update(rwTabId, {active: true});
+      await wait(200);
+    } catch (e) {
+      console.warn("[getRwScreenshot] failed to activate rwTab:", e);
+    }
 
     const req: ControllerToRwScreenshotRequest = {
       type: REQUEST_RADIO_WATER_MELON_SCREENSHOT,
@@ -155,23 +196,23 @@ async function getRwScreenshot(rwUrl: string): Promise<string> {
     const resp = (await sendMessageToTab(rwTabId, req)) as RwScreenshotToControllerResponse;
     dataUrl = resp?.screenshot || "";
   } finally {
-    if (active?.id) {
+    // Try to restore previous active tab (if any)
+    if (active && active.id) {
       try {
         await chrome.tabs.update(active.id, {active: true});
       } catch (e) {
-        console.error(e);
+        console.error("[getRwScreenshot] failed to restore active tab:", e);
       }
     }
-    if (rwTabId != null) {
-      try {
-        await chrome.tabs.remove(rwTabId);
-      } catch (e) {
-        console.error(e);
-      }
+    try {
+      await chrome.tabs.remove(rwTabId);
+    } catch (e) {
+      console.error("[getRwScreenshot] failed to remove rwTab:", e);
     }
   }
   return dataUrl;
 }
+
 
 export function* likeRtQuoteReplySage(action: PayloadAction) {
   if (action.type !== automatedTasksActions.setlikeRtQuoteReplyStatus.type) {
@@ -265,7 +306,7 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
           if (isRadioWaterMelonVerified) {
             const rwUrl = buildRwUrlForUser(usernameExtracted, verifiedSet);
             if (rwUrl) {
-              const shot: string = (yield call(getRwScreenshot, rwUrl)) as string;
+              const shot: string = (yield call(getRwScreenshot, rwUrl, tabId)) as string;
               if (shot) rwScreenshot = shot;
             }
           }
@@ -334,7 +375,7 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
         if (isRadioWaterMelonVerified) {
           const rwUrl = buildRwUrlForUser(handleF, verifiedSet);
           if (rwUrl) {
-            const shot: string = (yield call(getRwScreenshot, rwUrl)) as string;
+            const shot: string = (yield call(getRwScreenshot, rwUrl, tabId)) as string;
             if (shot) rwScreenshot = shot;
           }
         }

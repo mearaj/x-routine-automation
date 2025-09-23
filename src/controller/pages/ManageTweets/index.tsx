@@ -8,7 +8,9 @@ import {
   ListItem,
   ListItemText,
   TextField,
-  Typography
+  Typography,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import {Delete} from '@mui/icons-material';
 import {useAppDispatch, useAppSelector} from '../../../store';
@@ -60,6 +62,18 @@ function ManageTweetsPage() {
   const draggingIndexRef = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [autoAddFromClipboard, setAutoAddFromClipboard] = useState(true);
+
+  // Snackbar state for showing alerts when clipboard URLs are added (or info/errors)
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+  }>({open: false, message: '', severity: 'info'});
+
+  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+    setSnackbar({open: true, message, severity});
+  };
+  const closeSnackbar = () => setSnackbar(prev => ({...prev, open: false}));
 
   // preserve original intent: watermelonUsernames may be iterable of [username,...] or strings
   const normalizedVerifiedSet = new Set(
@@ -239,26 +253,29 @@ function ManageTweetsPage() {
   };
 
   useEffect(() => {
-    function onRuntimeMessage(message: { type: string; text: string }) {
-      const asyncCall = async (message: { type: string; text: string }) => {
-        try {
+    async function onRuntimeMessage(message: { type: string; text: string }) {
+      try {
           if (!message || message.type !== ON_CLIPBOARD_COPY) {
             return;
           }
           const text = message.text.trim();
           if (!autoAddFromClipboard) {
+            // inform user that clipboard was copied but auto-add disabled
+            showSnackbar('Clipboard changed but auto-add is disabled', 'info');
             return;
           }
           const isX = text.startsWith('https://x.com') || text.startsWith('https://www.x.com');
           if (!isX) {
+            // optional: let user know non-X URL ignored
+            showSnackbar('Clipboard content is not an X URL — ignored', 'warning');
             return;
           }
           dispatch(automatedTasksActions.addSourceTweetURLs([{url: text, isGaza: newSource.isGaza}]));
+          showSnackbar(`Added URL from clipboard: ${text}`, 'success');
         } catch (err) {
           console.error('ManageTweets clipboard handler error', err);
+          showSnackbar('Error handling clipboard content', 'error');
         }
-      }
-      asyncCall(message);
       return true;
     }
 
@@ -271,7 +288,6 @@ function ManageTweetsPage() {
       }
     };
   }, [autoAddFromClipboard, dispatch, newSource.isGaza]);
-
 
   return (
     <Box p={2}>
@@ -688,6 +704,18 @@ function ManageTweetsPage() {
           )}
         </Box>
       </Box>
+
+      {/* Snackbar + Alert for clipboard add feedback */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={closeSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
