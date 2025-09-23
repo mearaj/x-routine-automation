@@ -239,23 +239,27 @@ function ManageTweetsPage() {
   };
 
   useEffect(() => {
-    function onRuntimeMessage(message: { type: string; text: string}) {
-      try {
-        if (!message || message.type !== ON_CLIPBOARD_COPY) {
-          return;
+    function onRuntimeMessage(message: { type: string; text: string }) {
+      const asyncCall = async (message: { type: string; text: string }) => {
+        try {
+          if (!message || message.type !== ON_CLIPBOARD_COPY) {
+            return;
+          }
+          const text = message.text.trim();
+          if (!autoAddFromClipboard) {
+            return;
+          }
+          const isX = text.startsWith('https://x.com') || text.startsWith('https://www.x.com');
+          if (!isX) {
+            return;
+          }
+          dispatch(automatedTasksActions.addSourceTweetURLs([{url: text, isGaza: newSource.isGaza}]));
+        } catch (err) {
+          console.error('ManageTweets clipboard handler error', err);
         }
-        const text = message.text.trim();
-        if (!autoAddFromClipboard)  {
-          return;
-        }
-        const isX = text.startsWith('https://x.com') || text.startsWith('https://www.x.com');
-        if (!isX)  {
-          return;
-        }
-        dispatch(automatedTasksActions.addSourceTweetURLs([{url: text, isGaza: newSource.isGaza}]));
-      } catch (err) {
-        console.error('ManageTweets clipboard handler error', err);
       }
+      asyncCall(message);
+      return true;
     }
 
     chrome.runtime.onMessage.addListener(onRuntimeMessage);

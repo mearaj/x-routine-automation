@@ -44,8 +44,9 @@ function* getFirstFilteredFollowing() {
   const followings: Following[] = yield select(followingsSelector);
   const threshold: number = yield select(followingThresholdDurationSelector);
   const normalize = (u: string) => u.replace(/^@/, "").toLowerCase();
-  const {data}: { data: Set<string> } = yield select(verifiedByRadioWaterMelonSelector);
-  const verified: Set<string> = new Set(Array.from(data).map(u => u.replace(/^@/, "").toLowerCase()));
+  const {data}: { data: string[] | undefined } = yield select(verifiedByRadioWaterMelonSelector);
+  const verifiedArr: string[] = Array.isArray(data) ? data : [];
+  const verified: Set<string> = new Set(verifiedArr.map(u => u.replace(/^@/, "").toLowerCase()));
   const now = Date.now();
   for (const f of followings) {
     if ((now - f.timestamp) > threshold && verified.has(normalize(f.username))) {
@@ -128,7 +129,7 @@ function buildRwUrlForUser(username: string, verifiedSet: Set<string>): string |
 }
 
 async function getRwScreenshot(rwUrl: string): Promise<string> {
-  const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [active] = await chrome.tabs.query({active: true, currentWindow: true});
   const idx = (active?.index ?? 0) + 1;
 
   const rwTab = await chrome.tabs.create({
@@ -144,7 +145,7 @@ async function getRwScreenshot(rwUrl: string): Promise<string> {
 
   let dataUrl = "";
   try {
-    await chrome.tabs.update(rwTabId, { active: true });
+    await chrome.tabs.update(rwTabId, {active: true});
     await wait(200);
 
     const req: ControllerToRwScreenshotRequest = {
@@ -155,12 +156,16 @@ async function getRwScreenshot(rwUrl: string): Promise<string> {
     dataUrl = resp?.screenshot || "";
   } finally {
     if (active?.id) {
-      try { await chrome.tabs.update(active.id, { active: true }); } catch (e){
+      try {
+        await chrome.tabs.update(active.id, {active: true});
+      } catch (e) {
         console.error(e);
       }
     }
     if (rwTabId != null) {
-      try { await chrome.tabs.remove(rwTabId); } catch (e) {
+      try {
+        await chrome.tabs.remove(rwTabId);
+      } catch (e) {
         console.error(e);
       }
     }
@@ -218,7 +223,8 @@ export function* likeRtQuoteReplySage(action: PayloadAction) {
     }));
     yield delay(1000);
     const state = yield select(verifiedByRadioWaterMelonSelector);
-    const verifiedSet = state.data as Set<string>;
+    const verifiedArrFromState: string[] = Array.isArray(state?.data) ? state.data : [];
+    const verifiedSet: Set<string> = new Set(verifiedArrFromState.map(u => u.replace(/^@/, '').toLowerCase()));
     const verifiedRadioWaterMelonUsers = Array.from(verifiedSet);
     const sourceReplies: SourceReplies = yield select(sourceRepliesSelector);
     const likeRtThresholdDuration: number = yield select(likeRtThresholdDurationSelector);
