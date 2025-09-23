@@ -11,15 +11,16 @@ import {
   Typography
 } from '@mui/material';
 import {Delete} from '@mui/icons-material';
-import {useAppDispatch, useAppSelector} from '@/store/store';
-import {type ChangeEvent, useRef, useState} from 'react';
+import {useAppDispatch, useAppSelector} from '../../../store';
+import * as React from 'react';
+import {type ChangeEvent, useEffect, useRef, useState} from 'react';
 import {
   AutomatedTaskStatusEnum,
   type ControllerToLikeAndRtInput,
   type RtImage,
   type SourceTweetURL
-} from "@/utils/automatedTasks.ts";
-import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
+} from "../../../utils/automatedTasks.ts";
+import {automatedTasksActions} from "../../../store/slices/automatedTasks.ts";
 import {
   followingsSelector,
   followingThresholdDurationSelector,
@@ -31,11 +32,11 @@ import {
   sourceTweetURLsSelector,
   targetTweetURLsSelector,
   verifiedByRadioWaterMelonSelector
-} from "@/store/selectors.ts";
-import {emptyUserInput, extractUsername} from "@/utils/common.ts";
-import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
-import {userActions} from "@/store/slices/userSlice.ts";
-import * as React from "react";
+} from "../../../store/selectors.ts";
+import {emptyUserInput, extractUsername} from "../../../utils/common.ts";
+import {globalAppStateActions} from "../../../store/slices/globalAppState.ts";
+import {userActions} from "../../../store/slices/userSlice.ts";
+import {ON_CLIPBOARD_COPY} from "../../../utils";
 
 function ManageTweetsPage() {
   const dispatch = useAppDispatch();
@@ -58,6 +59,7 @@ function ManageTweetsPage() {
   const followings = useAppSelector(followingsSelector);
   const draggingIndexRef = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [autoAddFromClipboard, setAutoAddFromClipboard] = useState(true);
 
   // preserve original intent: watermelonUsernames may be iterable of [username,...] or strings
   const normalizedVerifiedSet = new Set(
@@ -236,13 +238,54 @@ function ManageTweetsPage() {
     setDragOverIndex(null);
   };
 
-  // ---------------------------
-  // Render
-  // ---------------------------
+  useEffect(() => {
+    function onRuntimeMessage(message: { type: string; text: string}) {
+      try {
+        if (!message || message.type !== ON_CLIPBOARD_COPY) {
+          return;
+        }
+        const text = message.text.trim();
+        if (!autoAddFromClipboard)  {
+          return;
+        }
+        const isX = text.startsWith('https://x.com') || text.startsWith('https://www.x.com');
+        if (!isX)  {
+          return;
+        }
+        dispatch(automatedTasksActions.addSourceTweetURLs([{url: text, isGaza: newSource.isGaza}]));
+      } catch (err) {
+        console.error('ManageTweets clipboard handler error', err);
+      }
+    }
+
+    chrome.runtime.onMessage.addListener(onRuntimeMessage);
+    return () => {
+      try {
+        chrome.runtime.onMessage.removeListener(onRuntimeMessage);
+      } catch {
+        console.error('ManageTweets cleanup error');
+      }
+    };
+  }, [autoAddFromClipboard, dispatch, newSource.isGaza]);
+
+
   return (
     <Box p={2}>
       <Box mt={3}>
-        <Typography variant="h6">Source URLs</Typography>
+        <Typography variant="h6">
+          Source URLs
+          <FormControlLabel
+            sx={{ml: 4}}
+            control={
+              <Checkbox
+                checked={autoAddFromClipboard}
+                onChange={(e) => setAutoAddFromClipboard(e.target.checked)}
+                size="small"
+              />
+            }
+            label="Auto-add from clipboard"
+          />
+        </Typography>
         <Box display="flex" gap={1} mt={1} alignItems="center">
           <TextField
             label="Add Source URL"
@@ -431,7 +474,7 @@ function ManageTweetsPage() {
           disabled={verifiedByRadioWaterMelon.state === "loading"}
           onClick={() => {
             dispatch(globalAppStateActions.setVerifiedByRadioWaterMelonState({
-              data: new Set(verifiedByRadioWaterMelon.data),
+              data: verifiedByRadioWaterMelon.data,
               state: "loading"
             }));
           }}
@@ -448,8 +491,8 @@ function ManageTweetsPage() {
           size="large"
           onClick={() => {
             const usernames = Array.from(verifiedByRadioWaterMelon.data)
-              .map(u => String(u).trim())
-              .filter(Boolean);
+            .map(u => String(u).trim())
+            .filter(Boolean);
 
             const jsonBlob = new Blob([JSON.stringify(usernames, null, 2)], {type: 'application/json'});
             const url = URL.createObjectURL(jsonBlob);

@@ -1,6 +1,6 @@
 import {takeEvery} from 'redux-saga/effects';
-import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
-import {startVerifiedByRadioWaterMelonSaga} from "@/store/sagas/verifiedByRadioWaterMelon.ts";
+import {globalAppStateActions} from "../slices/globalAppState.ts";
+import {startVerifiedByRadioWaterMelonSaga} from "./verifiedByRadioWaterMelon.ts";
 
 export function* watchGlobalAppStateSaga(): Generator {
   yield takeEvery(globalAppStateActions.setVerifiedByRadioWaterMelonState.type, startVerifiedByRadioWaterMelonSaga);

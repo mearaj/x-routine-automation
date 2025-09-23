@@ -1,9 +1,9 @@
 // Public saga
-import type {RootState} from "@/store";
+import type {RootState} from "../store.ts";
 import {call, put, select} from "redux-saga/effects";
-import {getAppStateFromStorage, saveAppStateToStorage} from "@/utils";
-import {userActions} from "@/store/slices/userSlice.ts";
-import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
+import {getAppStateFromStorage, saveAppStateToStorage} from "../../utils";
+import {userActions} from "../slices/userSlice.ts";
+import {automatedTasksActions} from "../slices/automatedTasks.ts";
 
 export function* loadAppStateFromStorage(): Generator {
   const storedState: RootState = yield call(getAppStateFromStorage);

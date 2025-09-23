@@ -5,7 +5,7 @@ import {
   REQUEST_RADIO_WATER_MELON_SCREENSHOT,
   RESPONSE_RADIO_WATER_MELON_SCREENSHOT
 } from "../utils";
-import type { ControllerToRwScreenshotRequest, RwScreenshotToControllerResponse } from "@/utils/automatedTasks.ts";
+import type { ControllerToRwScreenshotRequest, RwScreenshotToControllerResponse } from "../utils/automatedTasks.ts";
 
 export function registerRwScreenshot() {
   chrome.runtime.onMessage.addListener((message: ControllerToRwScreenshotRequest, _sender, sendResponse) => {

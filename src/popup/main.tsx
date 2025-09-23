@@ -1,7 +1,7 @@
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
 import './index.css'
-import App from "@/popup/App.tsx";
+import App from "../popup/App.tsx";
 
 const root = document.getElementById('root')!;
 

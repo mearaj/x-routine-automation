@@ -5,8 +5,8 @@ import {
   RESPONSE_LIKE_AND_RT, RESPONSE_RADIO_WATER_MELON_SCREENSHOT,
   RESPONSE_REPLY_WITH_URL,
   RESPONSE_START_SCRAPE_FOLLOWINGS
-} from "@/utils/keys.ts";
-import type {Following} from "@/utils/following.ts";
+} from "./keys.ts";
+import type {Following} from "./following.ts";
 
 export const AutomatedTaskStatusEnum = {
   Idle: 'Idle',
@@ -117,7 +117,7 @@ export interface SourceTweetURL {
 }
 
 export interface VerifiedByRadioWaterMelonState {
-  data: Set<string>;
+  data: string[];
   state: "error" | "success" | "idle" | "loading";
 }
 

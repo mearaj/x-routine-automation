@@ -1,5 +1,5 @@
 import {createSlice, type PayloadAction} from '@reduxjs/toolkit';
-import type {Following} from "@/utils/following.ts";
+import type {Following} from "../../utils/following.ts";
 
 export interface UserState {
   usernames: string[];

@@ -2,8 +2,8 @@
 import {Box, Button, IconButton, List, ListItem, ListItemText, TextField, Typography} from "@mui/material";
 import {Delete} from "@mui/icons-material";
 import {useDispatch, useSelector} from "react-redux";
-import type {RootState} from "@/store/store.ts";
-import {userActions} from "@/store/slices/userSlice.ts";
+import type {RootState} from "../../../store/store.ts";
+import {userActions} from "../../../store/slices/userSlice.ts";
 import {useState} from "react";
 
 interface UrlManagerSectionProps {

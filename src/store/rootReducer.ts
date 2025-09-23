@@ -1,7 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import {userReducer} from "./slices/userSlice.ts";
-import {automatedTasksReducer} from "@/store/slices/automatedTasks.ts";
-import {globalAppStateReducer} from "@/store/slices/globalAppState.ts";
+import {automatedTasksReducer} from "./slices/automatedTasks.ts";
+import {globalAppStateReducer} from "./slices/globalAppState.ts";
 
 const rootReducer = combineReducers({
   user: userReducer,

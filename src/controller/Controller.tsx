@@ -20,7 +20,7 @@ import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import {useSelector} from "react-redux";
-import type {RootState} from "@/store";
+import type {RootState} from "../store";
 
 export default function Controller() {
   const [collapsed, setCollapsed] = useState(false)
@@ -108,7 +108,7 @@ const activeUsername = useSelector((state: RootState) => state.user.activeUserna
         <Box sx={{ px: 1.5, pb: 1.5 }}>
           {!collapsed && (
             <Typography variant="caption" color="text.secondary">
-              v1.0.24
+              v2.0.0
             </Typography>
           )}
         </Box>

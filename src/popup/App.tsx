@@ -1,8 +1,8 @@
 import { Box, Button, TextField, Typography, CircularProgress } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { openOrFocusControllerTab } from "@/utils/tabs.ts";
-import { fetchVerifiedByRadioWaterMelonUsers } from "@/utils/globalState";
-import { extractUsername, extractUsernameFromXUrl } from "@/utils/common.ts";
+import { openOrFocusControllerTab } from "../utils/tabs.ts";
+import { fetchVerifiedByRadioWaterMelonUsers } from "../utils/globalState.ts";
+import { extractUsername, extractUsernameFromXUrl } from "../utils/common.ts";
 
 function App() {
   const [loading, setLoading] = useState(true);

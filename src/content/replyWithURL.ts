@@ -3,7 +3,7 @@
 import {PING_REQUEST, PONG_RESPONSE, REQUEST_REPLY_WITH_URL, RESPONSE_REPLY_WITH_URL} from "../utils";
 import {wait} from "../utils/common.ts";
 import {waitForElement} from "../content/common.ts";
-import type {ControllerToReplyWithURLRequest, ReplyWithURLToControllerResponse} from "@/utils/automatedTasks.ts";
+import type {ControllerToReplyWithURLRequest, ReplyWithURLToControllerResponse} from "../utils/automatedTasks.ts";
 
 export function registerReplyWithURL() {
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

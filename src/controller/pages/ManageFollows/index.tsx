@@ -12,13 +12,13 @@ import {
   Typography
 } from '@mui/material';
 import {Delete, ExpandMore} from '@mui/icons-material';
-import {useAppDispatch, useAppSelector} from '@/store/store.ts';
-import {userActions} from '@/store/slices/userSlice.ts';
+import {useAppDispatch, useAppSelector} from '../../../store';
+import {userActions} from '../../../store/slices/userSlice.ts';
 import {useState} from "react";
-import type {Following} from "@/utils/following.ts";
-import {collectFollowingsTaskSelector, userStateSelector} from "@/store/selectors.ts";
-import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
-import {AutomatedTaskStatusEnum} from "@/utils/automatedTasks.ts";
+import type {Following} from "../../../utils/following.ts";
+import {collectFollowingsTaskSelector, userStateSelector} from "../../../store/selectors.ts";
+import {automatedTasksActions} from "../../../store/slices/automatedTasks.ts";
+import {AutomatedTaskStatusEnum} from "../../../utils/automatedTasks.ts";
 
 function ManageFollowsPage() {
   const dispatch = useAppDispatch();

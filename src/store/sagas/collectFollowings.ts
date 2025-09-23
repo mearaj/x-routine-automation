@@ -1,20 +1,20 @@
 import type {PayloadAction} from "@reduxjs/toolkit";
-import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
+import {automatedTasksActions} from "../slices/automatedTasks.ts";
 import {
   type AutomatedTasks,
   AutomatedTaskStatusEnum,
   type ControllerToFollowingRequest
-} from "@/utils/automatedTasks.ts";
+} from "../../utils/automatedTasks.ts";
 import {call, delay, put, select} from "redux-saga/effects";
-import {activeUsernameSelector, automatedTasksSelector, followingsSelector} from "@/store/selectors.ts";
-import {removeTab, sendMessageToTab} from "@/utils/tabs.ts";
+import {activeUsernameSelector, automatedTasksSelector, followingsSelector} from "../selectors.ts";
+import {removeTab, sendMessageToTab} from "../../utils/tabs.ts";
 import {
   REQUEST_START_SCRAPE_FOLLOWINGS,
   REQUEST_STOP_SCRAPE_FOLLOWINGS,
   RESPONSE_START_SCRAPE_FOLLOWINGS
-} from "@/utils";
-import type {Following} from "@/utils/following.ts";
-import {userActions} from "@/store/slices/userSlice.ts";
+} from "../../utils";
+import type {Following} from "../../utils/following.ts";
+import {userActions} from "../slices/userSlice.ts";
 
 export function* stopCollectFollowingsSaga(action: PayloadAction) {
   if (action.type !== automatedTasksActions.setCollectingFollowingsStatus.type) {
