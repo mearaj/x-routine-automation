@@ -44,7 +44,11 @@ export function registerClipboardCapture(): void {
       const apiText = await readClipboardViaAPI();
       if (apiText) {
         console.log("[content/clipboard] clipboard (navigator.clipboard):", apiText);
-        chrome.runtime.sendMessage({type:ON_CLIPBOARD_COPY,text:apiText});
+        if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+         await chrome.runtime.sendMessage({type:ON_CLIPBOARD_COPY,text:apiText});
+        } else {
+          console.log("[content/clipboard] chrome runtime not found, cannot send message skipping sending of clipboard text");
+        }
         return;
       }
 
