@@ -1,7 +1,7 @@
 // store/sagas/likeRtQuoteReply.ts
 
 import type {PayloadAction} from "@reduxjs/toolkit";
-import {automatedTasksActions} from "@/store/slices/automatedTasks.ts";
+import {automatedTasksActions} from "../slices/automatedTasks.ts";
 import {
   type AutomatedTasks,
   AutomatedTaskStatusEnum,
@@ -16,7 +16,7 @@ import {
   type SourceToTargetReplies,
   type SourceTweetURL,
   type URLWithTimestamp,
-} from "@/utils/automatedTasks.ts";
+} from "../../utils/automatedTasks.ts";
 import {call, delay, put, select} from "redux-saga/effects";
 import {
   automatedTasksSelector,
@@ -32,13 +32,13 @@ import {
   userInputSelector,
   userStateSelector,
   verifiedByRadioWaterMelonSelector
-} from "@/store/selectors.ts";
-import type {Following} from "@/utils/following.ts";
-import {REQUEST_LIKE_AND_RT, REQUEST_RADIO_WATER_MELON_SCREENSHOT, REQUEST_REPLY_WITH_URL} from "@/utils";
-import {userActions, type UserState} from "@/store/slices/userSlice.ts";
-import {sendMessageToTab, updateTab} from "@/utils/tabs.ts";
-import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
-import {extractUsernameFromXUrl, RW_VIEW_URL, wait} from "@/utils/common.ts";
+} from "../selectors.ts";
+import type {Following} from "../../utils/following.ts";
+import {REQUEST_LIKE_AND_RT, REQUEST_RADIO_WATER_MELON_SCREENSHOT, REQUEST_REPLY_WITH_URL} from "../../utils";
+import {userActions, type UserState} from "../slices/userSlice.ts";
+import {sendMessageToTab, updateTab} from "../../utils/tabs.ts";
+import {globalAppStateActions} from "../slices/globalAppState.ts";
+import {extractUsernameFromXUrl, RW_VIEW_URL, wait} from "../../utils/common.ts";
 
 function* getFirstFilteredFollowing() {
   const followings: Following[] = yield select(followingsSelector);

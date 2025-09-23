@@ -1,13 +1,13 @@
 import {type ReactNode, useEffect} from "react";
-import {useAppDispatch} from "@/store";
-import {globalAppStateActions} from "@/store/slices/globalAppState.ts";
+import {useAppDispatch} from "../store";
+import {globalAppStateActions} from "../store/slices/globalAppState.ts";
 
 
 function GlobalProvider({children}: Readonly<{ children: ReactNode }>) {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(globalAppStateActions.setVerifiedByRadioWaterMelonState({data: new Set<string>(), state: "loading"}));
+    dispatch(globalAppStateActions.setVerifiedByRadioWaterMelonState({data: [], state: "loading"}));
   }, [dispatch]);
 
   useEffect(() => {

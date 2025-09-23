@@ -17,8 +17,8 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
-import type {RootState} from '@/store/store.ts';
-import {userActions} from '@/store/slices/userSlice.ts';
+import type {RootState} from '../../../store';
+import {userActions} from '../../../store/slices/userSlice.ts';
 
 const ManageUsersPage = () => {
   const dispatch = useDispatch();

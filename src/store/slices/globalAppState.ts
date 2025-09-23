@@ -1,10 +1,10 @@
 import {createSlice, type PayloadAction} from '@reduxjs/toolkit';
-import {type GlobalAppState, type VerifiedByRadioWaterMelonState,} from "@/utils/automatedTasks.ts";
+import {type GlobalAppState, type VerifiedByRadioWaterMelonState,} from "../../utils/automatedTasks.ts";
 
 
 const initialState: GlobalAppState = {
   verifiedByRadioWaterMelonState: {
-    data: new Set<string>(),
+    data: [],
     state: "idle",
   }
 }

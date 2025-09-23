@@ -1,9 +1,9 @@
 import { call, put, takeEvery } from 'redux-saga/effects';
 import { userActions } from '../slices/userSlice.ts';
-import { automatedTasksActions } from "@/store/slices/automatedTasks.ts";
-import { handleAppStateChange } from "@/store/sagas/appState.ts";
-import { getAppStateFromStorage } from "@/utils";
-import type { RootState } from "@/store";
+import { automatedTasksActions } from "../slices/automatedTasks.ts";
+import { handleAppStateChange } from "./appState.ts";
+import { getAppStateFromStorage } from "../../utils";
+import type { RootState } from "../store.ts";
 
 function* saveAndSwitchUser() {
   yield* handleAppStateChange(); // Save current state

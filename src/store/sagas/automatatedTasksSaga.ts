@@ -1,8 +1,8 @@
 import {takeEvery} from 'redux-saga/effects';
-import {automatedTasksActions} from '@/store/slices/automatedTasks.ts';
-import {collectFollowingsSaga, stopCollectFollowingsSaga} from "@/store/sagas/collectFollowings.ts";
-import {likeRtQuoteReplySage} from "@/store/sagas/likeRtQuoteReply.ts";
-import {handleAppStateChange} from "@/store/sagas/appState.ts";
+import {automatedTasksActions} from '../slices/automatedTasks.ts';
+import {collectFollowingsSaga, stopCollectFollowingsSaga} from "./collectFollowings.ts";
+import {likeRtQuoteReplySage} from "./likeRtQuoteReply.ts";
+import {handleAppStateChange} from "./appState.ts";
 
 export function* watchAutomatedTasksSaga(): Generator {
   yield takeEvery(automatedTasksActions.setCollectingFollowingsStatus.type, collectFollowingsSaga);

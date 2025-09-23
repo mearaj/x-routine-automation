@@ -318,7 +318,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
           // give the UI some time to accept the file and render a preview
           await wait(3000);
           if (imageToInsert.type.includes('video')) {
-            await wait(3000); // wait for video to load
+            await wait(5000); // wait for video to load
           }
           console.log("✅ Media injected (image/video).");
         } else {

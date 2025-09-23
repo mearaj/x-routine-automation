@@ -64,7 +64,7 @@ export const getAppStateFromStorage = async (): Promise<{
         minWaitingTimeForTweet,
         userInput: emptyUserInput,
         verifiedByRadioWaterMelonState: {
-          data: new Set<string>(),
+          data: [],
           state: "idle",
         }
       },
@@ -151,7 +151,7 @@ export const getAppStateFromStorage = async (): Promise<{
       minWaitingTimeForTweet: derivedMinWaitingTimeForTweet,
       userInput,
       verifiedByRadioWaterMelonState: {
-        data: new Set<string>(),
+        data: [],
         state: "idle",
       }
     },

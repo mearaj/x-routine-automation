@@ -1,4 +1,4 @@
-import type {ControllerToLikeAndRtInput} from "@/utils/automatedTasks.ts";
+import type {ControllerToLikeAndRtInput} from "./automatedTasks.ts";
 
 export const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

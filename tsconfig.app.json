@@ -25,9 +25,6 @@
     "noUncheckedSideEffectImports": true,
     "types": ["chrome"],
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
   },
   "include": ["src"]
 }

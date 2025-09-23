@@ -1,4 +1,4 @@
-import type {RootState} from "@/store/store.ts";
+import type {RootState} from "./store.ts";
 
 export const userStateSelector = (state: RootState) => state.user;
 export const activeUsernameSelector = (state: RootState) => state.user.activeUsername;

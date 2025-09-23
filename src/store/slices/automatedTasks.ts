@@ -7,7 +7,7 @@ import {
   type SourceReplies,
   type SourceToTargetReplies,
   type SourceTweetURL,
-} from "@/utils/automatedTasks.ts";
+} from "../../utils/automatedTasks.ts";
 import {
   emptyUserInput,
   followingThresholdDuration,
@@ -15,7 +15,7 @@ import {
   minWaitingTimeForFollowing,
   minWaitingTimeForTweet,
   sourceToTargetThresholdDuration
-} from "@/utils/common.ts";
+} from "../../utils/common.ts";
 
 
 const initialState: AutomatedTasks = {
