@@ -325,7 +325,7 @@ async function likeAndRtPinnedPostOnProfile(response: LikeAndRtToControllerRespo
           const progressEl = modalBox.querySelector('div[aria-live="polite"][role="status"]') as HTMLElement | null;
           console.log("progressEl", progressEl);
           if (progressEl) {
-            const timeoutMs = 10000;
+            const timeoutMs = 20000;
             const intervalMs = 200;
             const start = Date.now();
             while (Date.now() - start < timeoutMs) {
