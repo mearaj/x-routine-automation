@@ -12,7 +12,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import {Delete} from '@mui/icons-material';
+import {ContentCopy, Delete} from '@mui/icons-material';
 import {useAppDispatch, useAppSelector} from '../../../store';
 import * as React from 'react';
 import {type ChangeEvent, useEffect, useRef, useState} from 'react';
@@ -62,6 +62,8 @@ function ManageTweetsPage() {
   const draggingIndexRef = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [autoAddFromClipboard, setAutoAddFromClipboard] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
 
   // Snackbar state for showing alerts when clipboard URLs are added (or info/errors)
   const [snackbar, setSnackbar] = useState<{
@@ -219,9 +221,26 @@ function ManageTweetsPage() {
   };
 
   const onDragOverSource = (e: React.DragEvent, index: number) => {
-    e.preventDefault(); // allow drop
+    e.preventDefault();
     if (dragOverIndex !== index) setDragOverIndex(index);
+    try {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const y = e.clientY;
+      const EDGE_THRESHOLD = 48;
+      const SCROLL_STEP = 12;
+
+      if (y - rect.top < EDGE_THRESHOLD) {
+        container.scrollBy({top: -SCROLL_STEP});
+      } else if (rect.bottom - y < EDGE_THRESHOLD) {
+        container.scrollBy({top: SCROLL_STEP});
+      }
+    } catch (err) {
+      console.debug('auto-scroll error', err);
+    }
   };
+
 
   const onDropSource = (e: React.DragEvent, index: number) => {
     e.preventDefault();
@@ -259,6 +278,23 @@ function ManageTweetsPage() {
     draggingIndexRef.current = null;
     setDragOverIndex(null);
   };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (!text) return;
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        showSnackbar('Copied URL to clipboard', 'success');
+      } else {
+        window.prompt('Copy the URL (Ctrl/Cmd+C, then Enter):', text);
+      }
+    } catch (err) {
+      console.error('copy failed', err);
+      showSnackbar('Failed to copy to clipboard', 'error');
+    }
+  };
+
 
   useEffect(() => {
     async function onRuntimeMessage(message: { type: string; text: string }) {
@@ -305,19 +341,21 @@ function ManageTweetsPage() {
   return (
     <Box p={2}>
       <Box mt={3}>
-        <Typography variant="h6">
+        <Typography variant="h6" sx={{display: 'flex', alignItems: "center"}}>
           Source URLs
           <FormControlLabel
-            sx={{ml: 4}}
+            sx={{display: 'flex', alignItems: "center",ml:4, "& *": { fontSize: "inherit"}}}
             control={
               <Checkbox
                 checked={autoAddFromClipboard}
                 onChange={(e) => setAutoAddFromClipboard(e.target.checked)}
-                size="small"
               />
             }
             label="Auto-add from clipboard"
           />
+          <Box sx={{display: 'flex', ml: 4, alignItems: "center"}}>
+            Remaining Source URLs {sourceUrls?.length ?? 0}
+          </Box>
         </Typography>
         <Box display="flex" gap={1} mt={1} alignItems="center">
           <TextField
@@ -342,44 +380,45 @@ function ManageTweetsPage() {
         </Box>
 
         <Box mt={1} sx={{maxHeight: '50vh', overflow: 'auto'}}>
-          <List dense>
-            {/* defensive: filter out falsy entries; use safe key fallback */}
-            {(Array.isArray(sourceUrls) ? sourceUrls : []).filter(Boolean).map((item, index) => {
-              const url = item?.url ?? '';
-              const isGaza = !!item?.isGaza;
-              return (
-                <ListItem
-                  key={url || index}
-                  component="div"
-                  draggable
-                  onDragStart={(e) => onDragStartSource(e, index)}
-                  onDragOver={(e) => onDragOverSource(e, index)}
-                  onDrop={(e) => onDropSource(e, index)}
-                  onDragEnd={onDragEndSource}
-                  secondaryAction={
-                    <>
-                      <Checkbox
-                        edge="end"
-                        checked={isGaza}
-                        onChange={() => handleToggleIsGaza(url)}
-                      />
-                      <IconButton edge="end" onClick={() => handleRemoveSource(url)}>
-                        <Delete/>
-                      </IconButton>
-                    </>
-                  }
-                  sx={{
-                    cursor: 'grab',
-                    userSelect: 'none',
-                    backgroundColor: dragOverIndex === index ? 'rgba(0,0,0,0.04)' : 'transparent',
-                    transition: 'background-color 120ms',
-                  }}
-                >
-                  <ListItemText primary={url}/>
-                </ListItem>
-              );
-            })}
-          </List>
+          <div ref={scrollContainerRef} style={{maxHeight: '50vh', overflow: 'auto'}}>
+            <List dense>
+              {/* defensive: filter out falsy entries; use safe key fallback */}
+              {(Array.isArray(sourceUrls) ? sourceUrls : []).filter(Boolean).map((item, index) => {
+                const url = item?.url ?? '';
+                const isGaza = !!item?.isGaza;
+                return (
+                  <ListItem
+                    key={url || index}
+                    component="div"
+                    draggable
+                    onDragStart={(e) => onDragStartSource(e, index)}
+                    onDragOver={(e) => onDragOverSource(e, index)}
+                    onDrop={(e) => onDropSource(e, index)}
+                    onDragEnd={onDragEndSource}
+                    secondaryAction={
+                      <>
+                        <Checkbox edge="end" checked={isGaza} onChange={() => handleToggleIsGaza(url)}/>
+                        <IconButton sx={{ml: 2}} edge="end" onClick={() => copyToClipboard(url)} title="Copy URL">
+                          <ContentCopy/>
+                        </IconButton>
+                        <IconButton sx={{ml: 2}} edge="end" onClick={() => handleRemoveSource(url)}>
+                          <Delete/>
+                        </IconButton>
+                      </>
+                    }
+                    sx={{
+                      cursor: 'grab',
+                      userSelect: 'none',
+                      backgroundColor: dragOverIndex === index ? 'rgba(0,0,0,0.04)' : 'transparent',
+                      transition: 'background-color 120ms',
+                    }}
+                  >
+                    <ListItemText primary={url}/>
+                  </ListItem>
+                );
+              })}
+            </List>
+          </div>
         </Box>
       </Box>
 
