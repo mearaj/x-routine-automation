@@ -72,3 +72,32 @@ export function navigateToRelativeUrl(relativeUrl: string) {
   }
 }
 
+// add near top of content/likeAndRt.ts (or import from utils)
+export function isCloudflareTurnstilePage(): boolean {
+  const bodyText = (document.body?.textContent || "").toLowerCase();
+
+  // 1) iframe served by Cloudflare Turnstile / challenge
+  const hasCfIframe = !!document.querySelector(
+    'iframe[src*="challenges.cloudflare.com"], iframe[src*="turnstile"]'
+  );
+
+  // 2) hidden inputs Turnstile uses
+  const hasCfInputs = !!document.querySelector(
+    'input[name="cf-turnstile-response"], input[id^="cf-chl-widget"], input[name="cf_challenge_response"]'
+  );
+
+  // 3) Turnstile / challenge scripts
+  const hasCfScripts = !!document.querySelector(
+    'script[src*="turnstile"], script[src*="challenge-platform"], script[src*="cdn-cgi/challenge-platform"]'
+  );
+
+  // 4) Common visible texts used on challenge pages
+  const hasBannerText =
+    bodyText.includes("verify you are human") ||
+    bodyText.includes("just a moment") ||
+    bodyText.includes("verify you are human") ||
+    /ray id:/.test(bodyText) ||
+    bodyText.includes("needs to review the security of your connection");
+
+  return hasCfIframe || hasCfInputs || hasCfScripts || hasBannerText;
+}
