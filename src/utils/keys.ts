@@ -21,3 +21,6 @@ export const RESPONSE_RADIO_WATER_MELON_SCREENSHOT = "RESPONSE_RADIO_WATER_MELON
 export const ON_CLIPBOARD_COPY = "ON_CLIPBOARD_COPY";
 export const REQUEST_KEEP_BACKGROUND_ALIVE = "REQUEST_KEEP_BACKGROUND_ALIVE";
 export const RESPONSE_KEEP_BACKGROUND_ALIVE = "RESPONSE_KEEP_BACKGROUND_ALIVE";
+
+/** Background → content: full RW tab capture result (large `dataUrl` uses this path, not `sendMessage` reply). */
+export const RW_CAPTURE_DONE = "RW_CAPTURE_DONE";

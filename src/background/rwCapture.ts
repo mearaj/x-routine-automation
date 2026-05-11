@@ -1,5 +1,7 @@
 // background/rwCapture.ts
 
+import { RW_CAPTURE_DONE } from "../utils/keys.ts";
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "open-controller",
@@ -17,7 +19,13 @@ chrome.contextMenus.onClicked.addListener((info) => {
 /* ---------------- RW capture handler ---------------- */
 
 type CaptureRect = { x: number; y: number; w: number; h: number };
-type CaptureMsg = { type: "RW_CAPTURE_VISIBLE_TAB_AND_CROP"; rect: CaptureRect; dpr: number };
+type CaptureMsg = {
+  type: "RW_CAPTURE_VISIBLE_TAB_AND_CROP";
+  rect: CaptureRect;
+  dpr: number;
+  /** Correlate one sendMessage ↔ sendResponse in SW vs content logs. */
+  captureTraceId: string;
+};
 
 function isCaptureMsg(m: unknown): m is CaptureMsg {
   if (!m || typeof m !== "object") return false;
@@ -30,7 +38,9 @@ function isCaptureMsg(m: unknown): m is CaptureMsg {
     typeof r.y === "number" &&
     typeof r.w === "number" &&
     typeof r.h === "number" &&
-    typeof x.dpr === "number"
+    typeof x.dpr === "number" &&
+    typeof x.captureTraceId === "string" &&
+    x.captureTraceId.length > 0
   );
 }
 
@@ -41,77 +51,150 @@ function errStr(e: unknown): string {
   return anyE.message || anyE.toString?.() || "unknown error";
 }
 
-chrome.runtime.onMessage.addListener((msg: unknown, sender, sendResponse) => {
-  if (!isCaptureMsg(msg)) return;
+type RwCaptureDoneOk = {
+  type: typeof RW_CAPTURE_DONE;
+  captureTraceId: string;
+  extensionId: string;
+  ok: true;
+  dataUrl: string;
+};
 
-  console.log("[rw-bg] capture request", msg, "from tab", sender.tab?.id, "win", sender.tab?.windowId);
+type RwCaptureDoneErr = {
+  type: typeof RW_CAPTURE_DONE;
+  captureTraceId: string;
+  extensionId: string;
+  ok: false;
+  err: string;
+};
 
-  (async () => {
+async function sendRwCaptureDone(tabId: number, payload: RwCaptureDoneOk | RwCaptureDoneErr): Promise<void> {
+  try {
+    await chrome.tabs.sendMessage(tabId, payload);
+  } catch (e) {
+    console.warn("[rw-bg] tabs.sendMessage(RW_CAPTURE_DONE) failed:", errStr(e));
+  }
+}
+
+/** Runs after the synchronous `sendResponse({ accepted: true })` path returns to the caller. */
+async function finishRwCapture(msg: CaptureMsg, tabId: number, sender: chrome.runtime.MessageSender): Promise<void> {
+  const traceId = msg.captureTraceId;
+  const extensionId = chrome.runtime.id;
+  console.log("[rw-bg] capture request", traceId, msg, "from tab", sender.tab?.id, "win", sender.tab?.windowId);
+
+  try {
+    const tabIdForZoom = typeof sender.tab?.id === "number" ? sender.tab.id : null;
+    const winId = typeof sender.tab?.windowId === "number" ? sender.tab.windowId : null;
+
+    let zoom = 1;
     try {
-      const tabId = typeof sender.tab?.id === "number" ? sender.tab.id : null;
-      const winId = typeof sender.tab?.windowId === "number" ? sender.tab.windowId : null;
-
-      // Zoom factor for correct pixel scaling
-      let zoom = 1;
-      try {
-        if (tabId !== null) {
-          zoom = await chrome.tabs.getZoom(tabId);
-        }
-      } catch (e) {
-        console.warn("[rw-bg] getZoom failed; defaulting zoom=1:", errStr(e));
+      if (tabIdForZoom !== null) {
+        zoom = await chrome.tabs.getZoom(tabIdForZoom);
       }
+    } catch (e) {
+      console.warn("[rw-bg] getZoom failed; defaulting zoom=1:", errStr(e));
+    }
 
-      const options = { format: "png" as const };
+    const options = { format: "png" as const };
 
-      const afterCapture = async (dataUrl?: string) => {
+    let captureErr: string | null = null;
+    const dataUrl = await new Promise<string | undefined>((resolve) => {
+      const afterCapture = (url?: string) => {
         if (chrome.runtime.lastError) {
-          const err = chrome.runtime.lastError.message || "captureVisibleTab failed";
-          console.warn("[rw-bg]", err);
-          sendResponse({ ok: false, err });
+          captureErr = chrome.runtime.lastError.message || "captureVisibleTab failed";
+          console.warn("[rw-bg]", traceId, captureErr);
+          resolve(undefined);
           return;
         }
-        if (!dataUrl) {
-          const err = "empty dataUrl";
-          console.warn("[rw-bg]", err);
-          sendResponse({ ok: false, err });
-          return;
-        }
-
-        try {
-          const { rect, dpr } = msg;
-          const scale = Math.max(0.1, (dpr || 1) * (zoom || 1));
-
-          const sx = Math.max(0, Math.round(rect.x * scale));
-          const sy = Math.max(0, Math.round(rect.y * scale));
-          const sw = Math.max(1, Math.round(rect.w * scale));
-          const sh = Math.max(1, Math.round(rect.h * scale));
-
-          console.log("[rw-bg] crop params", { scale, sx, sy, sw, sh });
-
-          const out = await cropDataUrl(dataUrl, sx, sy, sw, sh);
-          console.log("[rw-bg] crop done, bytes:", out.length);
-          sendResponse({ ok: true, dataUrl: out });
-        } catch (e) {
-          const err = errStr(e);
-          console.error("[rw-bg] crop error", err);
-          sendResponse({ ok: false, err });
-        }
+        resolve(url);
       };
-
-      // Use correct overload; never pass undefined as first arg
       if (typeof winId === "number") {
         chrome.tabs.captureVisibleTab(winId, options, afterCapture);
       } else {
         chrome.tabs.captureVisibleTab(options, afterCapture);
       }
+    });
+
+    if (!dataUrl) {
+      await sendRwCaptureDone(tabId, {
+        type: RW_CAPTURE_DONE,
+        captureTraceId: traceId,
+        extensionId,
+        ok: false,
+        err: captureErr || "empty dataUrl",
+      });
+      return;
+    }
+
+    const { rect, dpr } = msg;
+    const scale = Math.max(0.1, (dpr || 1) * (zoom || 1));
+    const sx = Math.max(0, Math.round(rect.x * scale));
+    const sy = Math.max(0, Math.round(rect.y * scale));
+    const sw = Math.max(1, Math.round(rect.w * scale));
+    const sh = Math.max(1, Math.round(rect.h * scale));
+
+    console.log("[rw-bg] crop params", traceId, { scale, sx, sy, sw, sh });
+
+    try {
+      const out = await cropDataUrl(dataUrl, sx, sy, sw, sh);
+      console.log("[rw-bg] crop done", traceId, "bytes:", out.length);
+      await sendRwCaptureDone(tabId, {
+        type: RW_CAPTURE_DONE,
+        captureTraceId: traceId,
+        extensionId,
+        ok: true,
+        dataUrl: out,
+      });
     } catch (e) {
       const err = errStr(e);
-      console.error("[rw-bg] unexpected error", err);
-      sendResponse({ ok: false, err });
+      console.error("[rw-bg] crop error", traceId, err);
+      await sendRwCaptureDone(tabId, {
+        type: RW_CAPTURE_DONE,
+        captureTraceId: traceId,
+        extensionId,
+        ok: false,
+        err,
+      });
     }
-  })();
+  } catch (e) {
+    const err = errStr(e);
+    console.error("[rw-bg] unexpected error", traceId, err);
+    await sendRwCaptureDone(tabId, {
+      type: RW_CAPTURE_DONE,
+      captureTraceId: traceId,
+      extensionId: chrome.runtime.id,
+      ok: false,
+      err,
+    });
+  }
+}
 
-  return true; // keep sendResponse alive (async)
+chrome.runtime.onMessage.addListener((msg: unknown, sender, sendResponse): boolean => {
+  if (!isCaptureMsg(msg)) {
+    return false;
+  }
+
+  const tabId = typeof sender.tab?.id === "number" ? sender.tab.id : null;
+  const extensionId = chrome.runtime.id;
+  const traceId = msg.captureTraceId;
+
+  if (tabId === null) {
+    sendResponse({
+      accepted: false,
+      err: "no sender tab id",
+      captureTraceId: traceId,
+      extensionId,
+    });
+    return false;
+  }
+
+  // Synchronous ack (this path reliably reaches `sendMessage` in your environment).
+  sendResponse({
+    accepted: true,
+    captureTraceId: traceId,
+    extensionId,
+  });
+  void finishRwCapture(msg, tabId, sender);
+  return false;
 });
 
 /* ---------------- helpers ---------------- */
