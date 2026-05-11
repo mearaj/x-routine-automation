@@ -205,7 +205,7 @@ async function getRwScreenshot(rwUrl: string, referenceTabId?: number): Promise<
       }
     }
     try {
-      //await chrome.tabs.remove(rwTabId);
+      await chrome.tabs.remove(rwTabId);
     } catch (e) {
       console.error("[getRwScreenshot] failed to remove rwTab:", e);
     }
