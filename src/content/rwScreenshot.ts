@@ -3,9 +3,50 @@ import {
   PING_REQUEST,
   PONG_RESPONSE,
   REQUEST_RADIO_WATER_MELON_SCREENSHOT,
-  RESPONSE_RADIO_WATER_MELON_SCREENSHOT
+  RESPONSE_RADIO_WATER_MELON_SCREENSHOT,
+  RW_CAPTURE_DONE,
 } from "../utils";
 import type { ControllerToRwScreenshotRequest, RwScreenshotToControllerResponse } from "../utils/automatedTasks.ts";
+
+function waitForRwCaptureDone(
+  captureTraceId: string,
+  timeoutMs: number,
+  signal: AbortSignal
+): Promise<{ ok: true; dataUrl: string } | { ok: false; err: string }> {
+  return new Promise((resolve, reject) => {
+    function cleanup() {
+      clearTimeout(timer);
+      chrome.runtime.onMessage.removeListener(onMsg);
+      signal.removeEventListener("abort", onAbort);
+    }
+    function onAbort() {
+      cleanup();
+      reject(new Error("aborted"));
+    }
+    function onMsg(
+      message: unknown,
+      _sender: chrome.runtime.MessageSender,
+      _sendResponse: (response?: unknown) => void
+    ): boolean {
+      if (!message || typeof message !== "object") return false;
+      const m = message as Record<string, unknown>;
+      if (m.type !== RW_CAPTURE_DONE || m.captureTraceId !== captureTraceId) return false;
+      cleanup();
+      if (m.ok === true && typeof m.dataUrl === "string") {
+        resolve({ ok: true, dataUrl: m.dataUrl });
+      } else {
+        resolve({ ok: false, err: typeof m.err === "string" ? m.err : "capture failed" });
+      }
+      return false;
+    }
+    chrome.runtime.onMessage.addListener(onMsg);
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("RW_CAPTURE_DONE timeout"));
+    }, timeoutMs);
+    signal.addEventListener("abort", onAbort);
+  });
+}
 
 export function registerRwScreenshot() {
   chrome.runtime.onMessage.addListener((message: ControllerToRwScreenshotRequest, _sender, sendResponse) => {
@@ -64,27 +105,48 @@ async function replyWithRwScreenshot(
     };
     const dpr = window.devicePixelRatio || 1;
 
-    console.log("[rw] asking bg to capture + crop", { rect, dpr });
+    const captureTraceId = crypto.randomUUID();
+    const extensionId = chrome.runtime.id;
+    console.log("[rw] asking bg to capture + crop", { captureTraceId, rect, dpr, extensionId });
 
-    // ask background to capture & crop (bypasses canvas taint)
-    chrome.runtime.sendMessage(
-      { type: "RW_CAPTURE_VISIBLE_TAB_AND_CROP", rect, dpr },
-      (reply: { ok: boolean; dataUrl?: string } | undefined) => {
-        if (chrome.runtime.lastError) {
-          console.warn("[rw] bg lastError:", chrome.runtime.lastError.message);
-        } else {
-          console.log("[rw] bg replied:", reply);
-          if (reply?.ok && reply.dataUrl) {
-            response.screenshot = reply.dataUrl;
-          }
-        }
-        console.log("[rw] Sending response:", response);
-        // keep your intentional long wait for log inspection
-        (async () => {
-          sendResponse(response);
-        })();
+    const ac = new AbortController();
+    const donePromise = waitForRwCaptureDone(captureTraceId, 120_000, ac.signal);
+
+    type CaptureAck = { accepted: boolean; captureTraceId?: string; extensionId?: string; err?: string };
+
+    let ack: CaptureAck | undefined;
+    try {
+      ack = await chrome.runtime.sendMessage<
+        { type: "RW_CAPTURE_VISIBLE_TAB_AND_CROP"; rect: typeof rect; dpr: number; captureTraceId: string },
+        CaptureAck | undefined
+      >({ type: "RW_CAPTURE_VISIBLE_TAB_AND_CROP", rect, dpr, captureTraceId });
+    } catch (e) {
+      console.warn("[rw] capture ack sendMessage failed", captureTraceId, e);
+    }
+
+    console.log("[rw] capture ack", captureTraceId, ack);
+
+    if (!ack?.accepted) {
+      ac.abort();
+      try {
+        await donePromise;
+      } catch {
+        /* wait aborted: expected when capture was not accepted */
       }
-    );
+    } else {
+      try {
+        const result = await donePromise;
+        if (result.ok && result.dataUrl) {
+          response.screenshot = result.dataUrl;
+        } else {
+          console.warn("[rw] capture done error", captureTraceId, result);
+        }
+      } catch (e) {
+        console.warn("[rw] wait for RW_CAPTURE_DONE failed", captureTraceId, e);
+      }
+    }
+    console.log("[rw] Sending response:", response);
+    sendResponse(response);
   } catch (err) {
     console.error("[rw] capture error:", err);
     console.log("[rw] Sending response (error path):", response);
