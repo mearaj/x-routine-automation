@@ -9,6 +9,25 @@ export const matchesStatus = (url: string): boolean => {
   return /^https:\/\/x\.com\/[^/]+\/status\/\d+\/?$/.test(url);
 }
 
+/** Strip tracking query/hash so the same X status is compared as one URL. */
+export function normalizeXUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./i, "").toLowerCase();
+    if (host === "x.com" || host === "twitter.com") {
+      const path = u.pathname.replace(/\/+$/, "") || "/";
+      return `https://x.com${path}`.toLowerCase();
+    }
+    return `${u.origin}${u.pathname}`.toLowerCase();
+  } catch {
+    return url.trim().toLowerCase();
+  }
+}
+
+export function sameXUrl(a: string, b: string): boolean {
+  return normalizeXUrl(a) === normalizeXUrl(b);
+}
+
 export const RW_VIEW_URL = "https://view-awesome-table.com/-OU0D03DRAjPaOypjQCa/view";
 
 export function getCurrentUsernameFromUrl(): string | null {
