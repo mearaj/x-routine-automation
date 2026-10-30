@@ -1,6 +1,6 @@
 // content/likeAndRt.ts
 import {PING_REQUEST, PONG_RESPONSE, REQUEST_LIKE_AND_RT, RESPONSE_LIKE_AND_RT,} from "../utils/keys";
-import {extractUsernameFromXUrl, wait} from "../utils/common.ts";
+import {extractUsernameFromXUrl, sameXUrl, wait} from "../utils/common.ts";
 import {waitForElement} from "../content/common.ts";
 import type {
   ControllerToLikeAndRtInput,
@@ -30,7 +30,7 @@ async function likeAndRtProcessor(message: ControllerToLikeAndRtRequest, sendRes
     timestamp: message.timestamp,
     error: null,
   };
-  if (location.href !== message.url) {
+  if (!sameXUrl(location.href, message.url)) {
     const error = `expected ${message.url} and found ${location.href}`;
     console.error(error);
     response.error = error;
@@ -143,7 +143,7 @@ function getMatchingFundraiserUrl(urlsToMatch: string[], urlsToExclude: string[]
       tweetText.toLowerCase().includes(lowercaseUrl) ||
       tweetUrl.toLowerCase().includes(lowercaseUrl) ||
       userUrlText.toLowerCase().includes(lowercaseUrl) ||
-      location.href.toLowerCase().startsWith(url.toLowerCase())
+      sameXUrl(location.href, url) || location.href.toLowerCase().startsWith(url.toLowerCase())
     );
   })
   if (!excluded) {

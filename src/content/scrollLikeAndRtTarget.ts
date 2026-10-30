@@ -1,5 +1,5 @@
 import {REQUEST_SCROLL_LIKE_AND_RT_TARGET, RESPONSE_SCROLL_LIKE_AND_RT_TARGET} from "../utils";
-import {wait} from "../utils/common.ts";
+import {sameXUrl, wait} from "../utils/common.ts";
 
 export function registerScrollLikeAndRtTarget() {
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -20,7 +20,7 @@ export function registerScrollLikeAndRtTarget() {
 async function scrollLikeAndRtTarget(message: { type: string; targetUrl: string }) {
   const response = { type: RESPONSE_SCROLL_LIKE_AND_RT_TARGET, completed: false };
 
-  if (window.location.href !== message.targetUrl) {
+  if (!sameXUrl(window.location.href, message.targetUrl)) {
     console.warn(`URL mismatch. Expected: ${message.targetUrl}, Found: ${window.location.href}`);
     return response;
   }
